@@ -6,10 +6,10 @@ class BMPartsAdapter:
     BASE_URL = "https://api.bm.parts"
 
     def __init__(self):
-        self.token = "212aed4f-2855-4523-a50c-8eb80c028131.ayusfpcy8ebjYrEbEpX2vjcSe9E"
+        self.token = ""
         self.headers = {
-            "Authorization": "212aed4f-2855-4523-a50c-8eb80c028131.ayusfpcy8ebjYrEbEpX2vjcSe9E",
-            "User-Agent": "1111501",
+            "Authorization": "",
+            "User-Agent": "",
         }
 
     async def fetch(
