@@ -12,7 +12,9 @@ def get_current_user(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid Authorization Header")
 
     token = authorization.split("Bearer ")[1]
-    response = requests.get(f"{SUPABASE_URL}/auth/v1/user", headers={"Authorization": f"Bearer {token}"})
+    response = requests.get(
+        f"{SUPABASE_URL}/auth/v1/user", headers={"Authorization": f"Bearer {token}"}
+    )
 
     if response.status_code != 200:
         raise HTTPException(status_code=401, detail="Invalid Token")
