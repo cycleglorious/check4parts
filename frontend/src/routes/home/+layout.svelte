@@ -1,8 +1,11 @@
 <script lang="ts">
-	import { Navigation } from '@skeletonlabs/skeleton-svelte';
+	import Menu from './(components)/Menu.svelte';
+	import { page } from '$app/state';
 
 	let { data, children } = $props();
 	let { supabase } = $derived(data);
+
+	let currentPage = $derived(page.route.id?.split('/')[2]!);
 
 	const logout = async () => {
 		const { error } = await supabase.auth.signOut();
@@ -11,36 +14,28 @@
 		}
 		window.location.href = '/auth';
 	};
-
-	let isExpansed = $state(false);
-	let page = $state<'home' | 'staff'>();
-
-	const toggleExpanded = () => {
-		isExpansed = !isExpansed;
-	};
 </script>
 
-<header class="card border-surface-100-900 grid h-screen w-full grid-cols-[auto_1fr] border-[1px]">
-	<Navigation.Rail value={page} expanded={isExpansed}>
-		{#snippet header()}
-			<Navigation.Tile onclick={toggleExpanded}>Menu</Navigation.Tile>
-		{/snippet}
-		{#snippet tiles()}
-			<Navigation.Tile labelExpanded="Home" href="/home" id="home" onclick={() => (page = 'home')}
-				>Home</Navigation.Tile
-			>
-			<Navigation.Tile
-				labelExpanded="Staff"
-				href="/home/staff"
-				id="staff"
-				onclick={() => (page = 'staff')}>Staff</Navigation.Tile
-			>
-		{/snippet}
-		{#snippet footer()}
-			<Navigation.Tile onclick={logout}>Logout</Navigation.Tile>
-		{/snippet}
-	</Navigation.Rail>
-	<div>
+<main class="grid h-screen w-screen grid-cols-[auto_1fr] grid-rows-[auto_1fr] gap-5 px-3 py-5">
+	<h1 class="h5 flex h-full items-center uppercase">check4parts</h1>
+	<section class="min-w-2xs">
+		<div>
+			<input
+				type="search"
+				name="search"
+				placeholder="Пошук запчастини"
+				class="w-1/3 min-w-2xs rounded-3xl border-none bg-white"
+			/>
+		</div>
+	</section>
+
+	<menu class="flex h-full flex-col gap-2 transition-all">
+		<div class="h-full min-w-3xs overflow-auto">
+			<Menu page={currentPage} />
+		</div>
+		<button type="button" class="btn preset-filled-primary-950-50" onclick={logout}>Logout</button>
+	</menu>
+	<section class="rounded-3xl border-[1rem] border-white bg-white overflow-y-auto">
 		{@render children()}
-	</div>
-</header>
+	</section>
+</main>

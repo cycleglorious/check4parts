@@ -8,3 +8,7 @@
 @plugin '@tailwindcss/typography';
 
 @source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+
+:root {
+ scrollbar-color: var(--color-surface-300) var(--color-surface-50);
+}
