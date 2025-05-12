@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import EdidDeleteElementMenu from '$lib/components/table/EditDeleteModel.svelte';
+	import EdidDeleteElementMenu from '$lib/components/modals/EditDeleteModelInTable.svelte';
 	import toast from 'svelte-french-toast';
 
 	let { data, form } = $props();

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import EditDeleteModel from '$lib/components/table/EditDeleteModel.svelte';
+	import EditDeleteModel from '$lib/components/modals/EditDeleteModelInTable.svelte';
 	import toast from 'svelte-french-toast';
 	import type { PageProps } from './$types';
 	import AddEditPointModal from './AddEditPointModal.svelte';

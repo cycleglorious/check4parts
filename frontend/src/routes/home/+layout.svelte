@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Menu from './(components)/Menu.svelte';
 	import { page } from '$app/state';
+	import SearchInput from '$lib/components/search-bar/SearchInput.svelte';
+	import { goto } from '$app/navigation';
 
 	let { data, children } = $props();
 	let { supabase } = $derived(data);
@@ -19,13 +21,25 @@
 <main class="grid h-screen w-screen grid-cols-[auto_1fr] grid-rows-[auto_1fr] gap-5 px-3 py-5">
 	<h1 class="h5 flex h-full items-center uppercase">check4parts</h1>
 	<section class="min-w-2xs">
-		<div>
-			<input
-				type="search"
-				name="search"
-				placeholder="Пошук запчастини"
-				class="w-1/3 min-w-2xs rounded-3xl border-none bg-white"
-			/>
+		<div class="flex h-full w-full items-center justify-start gap-2">
+			<div class="w-2/6 min-w-[220px]">
+				<SearchInput
+					name="search"
+					placeholder="Пошук запчастини"
+					gotoOnSearch={(value) => {
+						goto(`/home/search?q=${value}`);
+					}}
+				/>
+			</div>
+			<div class="w-1/6 min-w-[220px]">
+				<SearchInput
+					name="search"
+					placeholder="Пошук по VIN коду"
+					gotoOnSearch={(value) => {
+						goto(`/home/search-vin?q=${value}`);
+					}}
+				/>
+			</div>
 		</div>
 	</section>
 
