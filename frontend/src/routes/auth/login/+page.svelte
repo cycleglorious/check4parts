@@ -1,6 +1,6 @@
 <script lang="ts">
-	import InputPasswordField from '$lib/components/login-register-form/InputPasswordField.svelte';
-	import InputTextField from '$lib/components/login-register-form/InputTextField.svelte';
+	import InputPasswordField from '$lib/components/forms/login-register/InputPasswordField.svelte';
+	import InputTextField from '$lib/components/forms/login-register/InputTextField.svelte';
 	import { isValidEmail } from '$lib/validation/email.js';
 
 	let { form } = $props();

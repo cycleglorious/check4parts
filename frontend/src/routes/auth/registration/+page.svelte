@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import InputTextField from '$lib/components/login-register-form/InputTextField.svelte';
+	import InputTextField from '$lib/components/forms/login-register/InputTextField.svelte';
 	import toast from 'svelte-french-toast';
 	import ConfrimModal from './(modal)/ConfrimModal.svelte';
 

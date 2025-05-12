@@ -1,7 +1,7 @@
 <script lang="ts">
-	import InputPasswordField from '$lib/components/card-form/InputPasswordField.svelte';
-	import InputSelect from '$lib/components/card-form/InputSelect.svelte';
-	import InputTextField from '$lib/components/card-form/InputTextField.svelte';
+	import InputPasswordField from '$lib/components/forms/card/InputPasswordField.svelte';
+	import InputSelect from '$lib/components/forms/card/InputSelect.svelte';
+	import InputTextField from '$lib/components/forms/card/InputTextField.svelte';
 	import toast from 'svelte-french-toast';
 
 	let { data, form } = $props();
