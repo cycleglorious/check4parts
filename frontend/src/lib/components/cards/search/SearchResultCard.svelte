@@ -43,7 +43,7 @@
 		id="header"
 		class="bg-primary-950 text-primary-50 flex items-center justify-between gap-2 px-4 py-2"
 	>
-		<h3 class="h5">{part.name}</h3>
+		<h3 class="h5">{part.brand.name}</h3>
 		<button
 			type="button"
 			class="btn preset-filled-primary-950-50"
@@ -61,31 +61,35 @@
 	</div>
 	{#if !collapsedContent}
 		<div id="content" transition:slide={{ duration: 200 }} class="rounded-b-xl">
-			<div class="flex flex-row gap-4 p-4 justify-between">
+			<div class="flex flex-col justify-between gap-4 p-4 2xl:flex-row">
 				<div class="flex gap-4 p-4">
 					<div>
-						<img src={part.image} alt={part.name} class="object-cover" />
+						<img src={part.image} alt={part.name} />
 					</div>
 					<div>
-						<h3 class="h5">{part.name}</h3>
-						<p>{part.description}</p>
-						<p>Код: {part.code}</p>
-						<p>Виробник: {part.brand.name}</p>
+						<a class="text-xl uppercase underline" href="/home/parts/{part.id}">{part.id}</a>
+						<p class="font-light">{part.name}</p>
+						<p class="font-light">{part.description}</p>
+						<p class="font-light">Код: {part.code}</p>
+						<p class="font-light">Виробник: {part.brand.name}</p>
 					</div>
 				</div>
 				<div id="rests" class="overflow-auto">
 					<table>
 						<thead>
 							<tr>
-								<th class="px-5 text-center font-normal tracking-wider text-gray-500"
-									>Постачальник</th
-								>
-								<th class="px-5 text-center font-normal tracking-wider text-gray-500">Кількість</th>
-								<th class="px-5 text-center font-normal tracking-wider text-gray-500"
-									>Час доставки</th
-								>
-								<th class="px-5 text-center font-normal tracking-wider text-gray-500">Ціна (грн)</th
-								>
+								<th class="px-5 text-center font-normal tracking-wider text-gray-500">
+									Постачальник
+								</th>
+								<th class="px-5 text-center font-normal tracking-wider text-gray-500">
+									Кількість
+								</th>
+								<th class="px-5 text-center font-normal tracking-wider text-gray-500">
+									Час доставки
+								</th>
+								<th class="px-5 text-center font-normal tracking-wider text-gray-500">
+									Ціна (грн)
+								</th>
 							</tr>
 						</thead>
 						<tbody class="bg-white">
@@ -102,20 +106,20 @@
 					</table>
 				</div>
 			</div>
-			<div id="footer" class="p-4 flex flex-row justify-between">
+			<div id="footer" class="flex flex-row justify-between p-4">
 				<div id="details">
 					<button
 						type="button"
-						class="uppercase underline p-0 flex items-center gap-2"
+						class="flex items-center gap-2 p-0 uppercase underline"
 						onclick={() => (showDetails = !showDetails)}
 					>
 						{showDetails ? 'Сховати деталі' : 'Показати деталі'}
-            <img
-              src="/details-arrow.svg"
-              alt="collapse"
-              class="size-4 transition-all"
-              class:rotate-180={showDetails}
-            />
+						<img
+							src="/details-arrow.svg"
+							alt="collapse"
+							class="size-4 transition-all"
+							class:rotate-180={showDetails}
+						/>
 					</button>
 					{#if showDetails}
 						<div class="flex flex-col" transition:slide={{ duration: 200 }}>
@@ -128,11 +132,9 @@
 						</div>
 					{/if}
 				</div>
-        <div>
-          <p class="uppercase underline"> 
-            Замінники
-          </p>
-        </div>
+				<div>
+					<p class="uppercase underline">Замінники</p>
+				</div>
 			</div>
 		</div>
 	{/if}
