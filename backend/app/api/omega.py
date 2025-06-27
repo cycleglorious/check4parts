@@ -40,8 +40,12 @@ class ClaimProductBase(BaseModel):
     vin: Optional[str] = Field(None, description="VIN number for hidden defects")
     car_mark: Optional[str] = Field(None, description="Car mark for hidden defects")
     car_model: Optional[str] = Field(None, description="Car model for hidden defects")
-    year_vehicle: Optional[int] = Field(None, ge=1000, le=9999, description="Vehicle year for hidden defects")
-    ready_for_discount: Optional[int] = Field(None, ge=0, le=1, description="Ready for discount (0 or 1)")
+    year_vehicle: Optional[int] = Field(
+        None, ge=1000, le=9999, description="Vehicle year for hidden defects"
+    )
+    ready_for_discount: Optional[int] = Field(
+        None, ge=0, le=1, description="Ready for discount (0 or 1)"
+    )
 
 
 class CreateClaimRequest(BaseModel):
@@ -53,7 +57,9 @@ class CreateClaimRequest(BaseModel):
     products: List[ClaimProductBase] = Field(
         ..., min_items=1, description="List of products for claim"
     )
-    photos: Optional[List[str]] = Field(None, description="List of photo reference keys")
+    photos: Optional[List[str]] = Field(
+        None, description="List of photo reference keys"
+    )
 
 
 class UploadPhotoRequest(BaseModel):
@@ -63,7 +69,7 @@ class UploadPhotoRequest(BaseModel):
 
     @field_validator("file_name")
     def validate_file_extension(cls, v):
-        if not v.lower().endswith('.jpg'):
+        if not v.lower().endswith(".jpg"):
             raise ValueError("File name must end with .jpg extension")
         return v
 
@@ -87,6 +93,66 @@ class GetDiscountRequest(BaseModel):
 
 class GetAddressesRequest(BaseModel):
     kind: int = Field(..., description="Address kind")
+
+
+class GetContactListRequest(BaseModel):
+    customer_id: str = Field(..., description="Customer ID")
+
+
+class AddContactRequest(BaseModel):
+    customer_id: str = Field(..., description="Customer ID")
+    first_name: str = Field(..., description="First name")
+    second_name: str = Field(..., description="Second name")
+    last_name: str = Field(..., description="Last name")
+    phone: Optional[str] = Field(None, description="Phone number")
+
+
+class EditContactRequest(BaseModel):
+    contact_id: str = Field(..., description="Contact ID")
+    first_name: str = Field(..., description="First name")
+    second_name: str = Field(..., description="Second name")
+    last_name: str = Field(..., description="Last name")
+
+
+class RemoveContactRequest(BaseModel):
+    contact_id: str = Field(..., description="Contact ID")
+
+
+class AddContactPhoneRequest(BaseModel):
+    contact_id: str = Field(..., description="Contact ID")
+    phone: str = Field(..., description="Phone number")
+
+
+class RemoveContactPhoneRequest(BaseModel):
+    contact_id: str = Field(..., description="Contact ID")
+    phone: str = Field(..., description="Phone number")
+
+
+class GetContactDetailsRequest(BaseModel):
+    contact_id: str = Field(..., description="Contact ID")
+
+
+class GetExpenseDocumentRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+
+
+class GetExpenseDocumentListRequest(BaseModel):
+    start_date: str = Field(..., description="Start date in DD.MM.YYYY format")
+    end_date: str = Field(..., description="End date in DD.MM.YYYY format")
+
+    @field_validator("start_date", "end_date")
+    def validate_date_format(cls, v):
+        from datetime import datetime
+
+        try:
+            datetime.strptime(v, "%d.%m.%Y")
+            return v
+        except ValueError:
+            raise ValueError("Date must be in DD.MM.YYYY format")
+
+
+class GetExpenseDocumentDetailsRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
 
 
 async def handle_api_errors(func, *args, **kwargs):
@@ -158,7 +224,10 @@ async def get_kind_claims(request: GetKindClaimsRequest):
 async def check_claim_kind(request: CheckClaimKindRequest):
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(
-            adapter.check_claim_kind, request.doc_id, request.kind_id, request.product_id
+            adapter.check_claim_kind,
+            request.doc_id,
+            request.kind_id,
+            request.product_id,
         )
 
 
@@ -245,43 +314,121 @@ async def download_refund_documents():
         return await handle_api_errors(adapter.download_refund_documents)
 
 
-@router.get("/basket/add-product")
-async def add_product_to_basket_query(
-        product_id: int = Query(..., description="Product ID"),
-        count: int = Query(..., gt=0, description="Product count must be positive"),
-):
+# Contact endpoints
+@router.post("/contact/get-contacts")
+async def get_contact_list(request: GetContactListRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contact_list, request.customer_id)
+
+
+@router.post("/contact/add-contact")
+async def add_contact(request: AddContactRequest):
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(
-            adapter.add_product_to_basket, product_id, count
+            adapter.add_contact,
+            request.customer_id,
+            request.first_name,
+            request.second_name,
+            request.last_name,
+            request.phone,
         )
+
+
+@router.post("/contact/edit-contact")
+async def edit_contact(request: EditContactRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.edit_contact,
+            request.contact_id,
+            request.first_name,
+            request.second_name,
+            request.last_name,
+        )
+
+
+@router.post("/contact/remove-contact")
+async def remove_contact(request: RemoveContactRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.remove_contact, request.contact_id)
+
+
+@router.post("/contact/add-contact-phone")
+async def add_contact_phone(request: AddContactPhoneRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.add_contact_phone, request.contact_id, request.phone
+        )
+
+
+@router.post("/contact/remove-contact-phone")
+async def remove_contact_phone(request: RemoveContactPhoneRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.remove_contact_phone, request.contact_id, request.phone
+        )
+
+
+@router.post("/contact/get-contact-details")
+async def get_contact_details(request: GetContactDetailsRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contact_details, request.contact_id)
+
+
+# Expense document endpoints
+@router.post("/expense/get-expense-document")
+async def get_expense_document(request: GetExpenseDocumentRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_expense_document, request.doc_id)
+
+
+@router.post("/expense/get-expense-document-list")
+async def get_expense_document_list(request: GetExpenseDocumentListRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_expense_document_list, request.start_date, request.end_date
+        )
+
+
+@router.post("/expense/get-expense-document-details")
+async def get_expense_document_details(request: GetExpenseDocumentDetailsRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_expense_document_details, request.doc_id
+        )
+
+
+# GET endpoints (existing ones kept for backward compatibility)
+@router.get("/basket/add-product")
+async def add_product_to_basket_query(
+    product_id: int = Query(..., description="Product ID"),
+    count: int = Query(..., gt=0, description="Product count must be positive"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.add_product_to_basket, product_id, count)
 
 
 @router.get("/basket/remove-product")
 async def remove_product_from_basket_query(
-        product_id: int = Query(..., description="Product ID to remove"),
+    product_id: int = Query(..., description="Product ID to remove"),
 ):
     async with OmegaAdapter() as adapter:
-        return await handle_api_errors(
-            adapter.remove_product_from_basket, product_id
-        )
+        return await handle_api_errors(adapter.remove_product_from_basket, product_id)
 
 
 @router.get("/claims/kind-claims")
 async def get_kind_claims_query(
-        product_id: str = Query(..., description="Product ID"),
-        doc_id: str = Query(..., description="Document ID"),
+    product_id: str = Query(..., description="Product ID"),
+    doc_id: str = Query(..., description="Document ID"),
 ):
     async with OmegaAdapter() as adapter:
-        return await handle_api_errors(
-            adapter.get_kind_claims, product_id, doc_id
-        )
+        return await handle_api_errors(adapter.get_kind_claims, product_id, doc_id)
 
 
 @router.get("/claims/discount")
 async def get_discount_query(
-        product_id: str = Query(..., description="Product ID"),
-        doc_id: str = Query(..., description="Document ID"),
-        type_id: str = Query(..., description="Type ID"),
+    product_id: str = Query(..., description="Product ID"),
+    doc_id: str = Query(..., description="Document ID"),
+    type_id: str = Query(..., description="Type ID"),
 ):
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(
@@ -291,7 +438,50 @@ async def get_discount_query(
 
 @router.get("/claims/addresses")
 async def get_addresses_query(
-        kind: int = Query(..., description="Address kind"),
+    kind: int = Query(..., description="Address kind"),
 ):
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(adapter.get_addresses, kind)
+
+
+@router.get("/contact/get-contacts")
+async def get_contact_list_query(
+    customer_id: str = Query(..., description="Customer ID"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contact_list, customer_id)
+
+
+@router.get("/contact/get-contact-details")
+async def get_contact_details_query(
+    contact_id: str = Query(..., description="Contact ID"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contact_details, contact_id)
+
+
+@router.get("/expense/get-expense-document")
+async def get_expense_document_query(
+    doc_id: str = Query(..., description="Document ID"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_expense_document, doc_id)
+
+
+@router.get("/expense/get-expense-document-list")
+async def get_expense_document_list_query(
+    start_date: str = Query(..., description="Start date in DD.MM.YYYY format"),
+    end_date: str = Query(..., description="End date in DD.MM.YYYY format"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_expense_document_list, start_date, end_date
+        )
+
+
+@router.get("/expense/get-expense-document-details")
+async def get_expense_document_details_query(
+    doc_id: str = Query(..., description="Document ID"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_expense_document_details, doc_id)
