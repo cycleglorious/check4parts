@@ -1,229 +1,297 @@
+import logging
+from typing import List, Optional
+
 from fastapi import APIRouter, HTTPException, Query
-from typing import Optional, List
-from pydantic import BaseModel
-from app.adapters.omega_adapter import OmegaAdapter
+from pydantic import BaseModel, Field, field_validator
 
-router = APIRouter(prefix="/omega", tags=["Omega"])
+from app.adapters.omega_adapter import OmegaAdapter, OmegaAPIError
 
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/omega", tags=["omega"])
 
 
-class ProductItem(BaseModel):
-    product_id: str
-    quantity: int
-    price: Optional[float] = None
+class BasketProductItem(BaseModel):
+    product_id: int = Field(..., description="Product ID")
+    count: int = Field(..., gt=0, description="Product count must be positive")
 
 
-class CreateOrderRequest(BaseModel):
-    products: List[ProductItem]
-    test_mode: Optional[bool] = False
-    notes: Optional[str] = None
+class AddProductRequest(BaseModel):
+    product_id: int = Field(..., description="Product ID")
+    count: int = Field(..., description="Product count (can be negative to reduce)")
 
 
-class CreateBasketRequest(BaseModel):
-    products: List[ProductItem]
+class AddProductListRequest(BaseModel):
+    product_list: List[BasketProductItem] = Field(
+        ..., min_items=1, description="List of products to add"
+    )
 
 
-class UpdateOrderRequest(BaseModel):
-    products: Optional[List[ProductItem]] = None
-    status: Optional[str] = None
-    notes: Optional[str] = None
+class RemoveProductRequest(BaseModel):
+    product_id: int = Field(..., description="Product ID to remove")
 
 
-@router.post("/login/")
-async def login_omega_user(request: LoginRequest):
-    adapter = OmegaAdapter()
+class ClaimProductBase(BaseModel):
+    product_id: str = Field(..., description="Product ID")
+    doc_id: str = Field(..., description="Document ID")
+    kind_id: str = Field(..., description="Kind of claim")
+    text: Optional[str] = Field(None, description="Claim text")
+    quantity: Optional[str] = Field(None, description="Quantity")
+    sum_claim: Optional[float] = Field(None, ge=0, description="Claim sum")
+    vin: Optional[str] = Field(None, description="VIN number for hidden defects")
+    car_mark: Optional[str] = Field(None, description="Car mark for hidden defects")
+    car_model: Optional[str] = Field(None, description="Car model for hidden defects")
+    year_vehicle: Optional[int] = Field(None, ge=1000, le=9999, description="Vehicle year for hidden defects")
+    ready_for_discount: Optional[int] = Field(None, ge=0, le=1, description="Ready for discount (0 or 1)")
+
+
+class CreateClaimRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+    comment: Optional[str] = Field(None, description="Claim comment")
+    contact_id: Optional[str] = Field(None, description="Contact ID")
+    phone_id: Optional[str] = Field(None, description="Phone ID")
+    address_key: Optional[str] = Field(None, description="Address key")
+    products: List[ClaimProductBase] = Field(
+        ..., min_items=1, description="List of products for claim"
+    )
+    photos: Optional[List[str]] = Field(None, description="List of photo reference keys")
+
+
+class UploadPhotoRequest(BaseModel):
+    product_id: Optional[str] = Field(None, description="Product ID")
+    data: str = Field(..., description="Base64 encoded image data")
+    file_name: str = Field(..., description="File name with .jpg extension")
+
+    @field_validator("file_name")
+    def validate_file_extension(cls, v):
+        if not v.lower().endswith('.jpg'):
+            raise ValueError("File name must end with .jpg extension")
+        return v
+
+
+class GetKindClaimsRequest(BaseModel):
+    product_id: str = Field(..., description="Product ID")
+    doc_id: str = Field(..., description="Document ID")
+
+
+class CheckClaimKindRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+    kind_id: str = Field(..., description="Kind ID")
+    product_id: str = Field(..., description="Product ID")
+
+
+class GetDiscountRequest(BaseModel):
+    product_id: str = Field(..., description="Product ID")
+    doc_id: str = Field(..., description="Document ID")
+    type_id: str = Field(..., description="Type ID")
+
+
+class GetAddressesRequest(BaseModel):
+    kind: int = Field(..., description="Address kind")
+
+
+async def handle_api_errors(func, *args, **kwargs):
     try:
-        return await adapter.login(
-            username=request.username,
-            password=request.password
+        return await func(*args, **kwargs)
+    except OmegaAPIError as e:
+        logger.error(f"Omega API error: {e}")
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+    except Exception as e:
+        logger.error(f"Unexpected error in Omega adapter: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@router.post("/profile/account")
+async def get_account():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_account)
+
+
+@router.post("/basket/add-product")
+async def add_product_to_basket(request: AddProductRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.add_product_to_basket, request.product_id, request.count
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/logout/")
-async def logout_omega_user():
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.logout()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.post("/basket/add-product-list")
+async def add_product_list_to_basket(request: AddProductListRequest):
+    async with OmegaAdapter() as adapter:
+        products_data = [
+            {"ProductId": item.product_id, "Count": item.count}
+            for item in request.product_list
+        ]
+        return await handle_api_errors(
+            adapter.add_product_list_to_basket, products_data
+        )
 
 
-@router.get("/me/")
-async def get_current_user():
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.me()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.post("/basket/remove-product")
+async def remove_product_from_basket(request: RemoveProductRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.remove_product_from_basket, request.product_id
+        )
 
 
-@router.post("/refresh/")
-async def refresh_token():
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.refresh_token()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.post("/basket/get")
+async def get_basket():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_basket)
 
 
-@router.get("/orders/")
-async def list_orders(
-        page: int = Query(1, ge=1, description="Page number"),
-        limit: int = Query(50, ge=1, le=100, description="Items per page")
+@router.post("/basket/clear")
+async def clear_basket():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.clear_basket)
+
+
+@router.post("/claims/kind-claims")
+async def get_kind_claims(request: GetKindClaimsRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_kind_claims, request.product_id, request.doc_id
+        )
+
+
+@router.post("/claims/check-claim-kind")
+async def check_claim_kind(request: CheckClaimKindRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.check_claim_kind, request.doc_id, request.kind_id, request.product_id
+        )
+
+
+@router.post("/claims/discount")
+async def get_discount(request: GetDiscountRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_discount, request.product_id, request.doc_id, request.type_id
+        )
+
+
+@router.post("/claims/contacts")
+async def get_contacts():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contacts)
+
+
+@router.post("/claims/upload-photo")
+async def upload_photo(request: UploadPhotoRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.upload_photo, request.product_id, request.data, request.file_name
+        )
+
+
+@router.post("/claims/addresses")
+async def get_addresses(request: GetAddressesRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_addresses, request.kind)
+
+
+@router.post("/claims/create")
+async def create_claim(request: CreateClaimRequest):
+    async with OmegaAdapter() as adapter:
+        products_data = []
+        for product in request.products:
+            product_dict = {
+                "ProductId": product.product_id,
+                "DocId": product.doc_id,
+                "KindId": product.kind_id,
+            }
+
+            if product.text:
+                product_dict["Text"] = product.text
+            if product.quantity:
+                product_dict["Quantity"] = product.quantity
+            if product.sum_claim is not None:
+                product_dict["SumClaim"] = product.sum_claim
+
+            if product.vin:
+                product_dict["Vin"] = product.vin
+            if product.car_mark:
+                product_dict["CarMark"] = product.car_mark
+            if product.car_model:
+                product_dict["CarModel"] = product.car_model
+            if product.year_vehicle:
+                product_dict["YearVehicle"] = product.year_vehicle
+            if product.ready_for_discount is not None:
+                product_dict["ReadyForDiscount"] = product.ready_for_discount
+
+            products_data.append(product_dict)
+
+        return await handle_api_errors(
+            adapter.create_claim,
+            request.doc_id,
+            products_data,
+            request.comment,
+            request.contact_id,
+            request.phone_id,
+            request.address_key,
+            request.photos,
+        )
+
+
+@router.post("/claims/list")
+async def get_claims_list():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_claims_list)
+
+
+@router.post("/claims/download-refund-documents")
+async def download_refund_documents():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.download_refund_documents)
+
+
+@router.get("/basket/add-product")
+async def add_product_to_basket_query(
+        product_id: int = Query(..., description="Product ID"),
+        count: int = Query(..., gt=0, description="Product count must be positive"),
 ):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_orders(page=page, limit=limit)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.post("/orders/")
-async def create_order(request: CreateOrderRequest):
-    adapter = OmegaAdapter()
-    try:
-        products = [item.dict() for item in request.products]
-
-        additional_params = {}
-        if request.test_mode is not None:
-            additional_params["test_mode"] = request.test_mode
-        if request.notes:
-            additional_params["notes"] = request.notes
-
-        return await adapter.create_order(
-            products=products,
-            **additional_params
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.add_product_to_basket, product_id, count
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/orders/{order_id}")
-async def get_order(order_id: str):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_order(order_id=order_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.put("/orders/{order_id}")
-async def update_order(order_id: str, request: UpdateOrderRequest):
-    adapter = OmegaAdapter()
-    try:
-        update_data = {}
-        if request.products:
-            update_data["products"] = [item.dict() for item in request.products]
-        if request.status:
-            update_data["status"] = request.status
-        if request.notes:
-            update_data["notes"] = request.notes
-
-        return await adapter.update_order(order_id=order_id, data=update_data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.post("/orders/{order_id}/cancel")
-async def cancel_order(order_id: str):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.cancel_order(order_id=order_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/products/")
-async def list_products(
-        category: Optional[str] = Query(None, description="Filter by category"),
-        page: int = Query(1, ge=1, description="Page number"),
-        limit: int = Query(50, ge=1, le=100, description="Items per page")
+@router.get("/basket/remove-product")
+async def remove_product_from_basket_query(
+        product_id: int = Query(..., description="Product ID to remove"),
 ):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_products(
-            category=category,
-            page=page,
-            limit=limit
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.remove_product_from_basket, product_id
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/products/{product_id}")
-async def get_product(product_id: str):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_product(product_id=product_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/categories/")
-async def list_categories():
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_categories()
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.post("/prices/")
-async def get_prices(
-        filter_props: Optional[dict] = None,
-        page: int = Query(1, ge=1, description="Page number"),
-        limit: int = Query(50, ge=1, le=100, description="Items per page")
+@router.get("/claims/kind-claims")
+async def get_kind_claims_query(
+        product_id: str = Query(..., description="Product ID"),
+        doc_id: str = Query(..., description="Document ID"),
 ):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_prices(
-            filter_props=filter_props,
-            page=page,
-            limit=limit
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_kind_claims, product_id, doc_id
         )
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/inventory/")
-async def get_inventory(product_ids: Optional[List[str]] = None):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_inventory(product_ids=product_ids)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.get("/claims/discount")
+async def get_discount_query(
+        product_id: str = Query(..., description="Product ID"),
+        doc_id: str = Query(..., description="Document ID"),
+        type_id: str = Query(..., description="Type ID"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_discount, product_id, doc_id, type_id
+        )
 
 
-@router.post("/basket/")
-async def create_basket(request: CreateBasketRequest):
-    adapter = OmegaAdapter()
-    try:
-        products = [item.dict() for item in request.products]
-        return await adapter.create_basket(products=products)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/basket/{basket_id}")
-async def get_basket(basket_id: str):
-    adapter = OmegaAdapter()
-    try:
-        return await adapter.get_basket(basket_id=basket_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.put("/basket/{basket_id}")
-async def update_basket(basket_id: str, request: CreateBasketRequest):
-    adapter = OmegaAdapter()
-    try:
-        products = [item.dict() for item in request.products]
-        return await adapter.update_basket(basket_id=basket_id, products=products)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@router.get("/claims/addresses")
+async def get_addresses_query(
+        kind: int = Query(..., description="Address kind"),
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_addresses, kind)
