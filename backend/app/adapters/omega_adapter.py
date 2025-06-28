@@ -508,6 +508,335 @@ class OmegaAdapter:
             json_data=json_data,
         )
 
+    async def add_invoice(self) -> Dict[str, Any]:
+        return await self._make_request("POST", "/public/api/v1.0/invoice8/addInvoice")
+
+    async def reserve_invoice(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/reserveInvoice", json_data=json_data
+        )
+
+    async def cod_invoice(self, doc_id: str, summ_cod: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        summ_cod = self._validate_non_empty_string(summ_cod, "COD Sum")
+
+        json_data = {"DocId": doc_id, "SummCod": summ_cod}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/codInvoice", json_data=json_data
+        )
+
+    async def ready_invoice(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/readyInvoice", json_data=json_data
+        )
+
+    async def add_product_to_invoice(
+        self, doc_id: str, prod_id: int, count: int
+    ) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        if not isinstance(prod_id, int):
+            raise OmegaAPIError(400, "Product ID must be an integer")
+        if not isinstance(count, int) or count == 0:
+            raise OmegaAPIError(400, "Count must be a non-zero integer")
+
+        json_data = {"DocId": doc_id, "ProdId": prod_id, "Count": count}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/addProductToInvoice", json_data=json_data
+        )
+
+    async def move_products_from_basket_to_invoice(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/invoice8/moveProductsFromBasketToInvoice",
+            json_data=json_data,
+        )
+
+    async def get_invoice_list(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getListInvoice"
+        )
+
+    async def get_invoice(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getInvoice", json_data=json_data
+        )
+
+    async def get_customers(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getCustomers"
+        )
+
+    async def set_invoice_customer(
+        self, customer_id: str, doc_id: str
+    ) -> Dict[str, Any]:
+        customer_id = self._validate_non_empty_string(customer_id, "Customer ID")
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"CustomerId": customer_id, "DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/setInvoiceCustomer", json_data=json_data
+        )
+
+    async def get_contracts(self, customer_id: str) -> Dict[str, Any]:
+        customer_id = self._validate_non_empty_string(customer_id, "Customer ID")
+
+        json_data = {"CustomerId": customer_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getContracts", json_data=json_data
+        )
+
+    async def set_invoice_contract(
+        self, contract_id: str, doc_id: str
+    ) -> Dict[str, Any]:
+        contract_id = self._validate_non_empty_string(contract_id, "Contract ID")
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"ContractId": contract_id, "DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/setInvoiceContract", json_data=json_data
+        )
+
+    async def get_warehouses(
+        self,
+        customer_id: str,
+        shipment_type_id: Optional[str] = None,
+        delivery_address_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        customer_id = self._validate_non_empty_string(customer_id, "Customer ID")
+
+        json_data = {"CustomerId": customer_id}
+        if shipment_type_id:
+            json_data["ShipmentTypeId"] = shipment_type_id.strip()
+        if delivery_address_id:
+            json_data["DeliveryAddressId"] = delivery_address_id.strip()
+
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getWarehouses", json_data=json_data
+        )
+
+    async def set_invoice_warehouse(
+        self, warehouse_id: str, doc_id: str
+    ) -> Dict[str, Any]:
+        warehouse_id = self._validate_non_empty_string(warehouse_id, "Warehouse ID")
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"WarehouseId": warehouse_id, "DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/setInvoiceWarehouse", json_data=json_data
+        )
+
+    async def get_shipment_types(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getShipmentTypes"
+        )
+
+    async def get_plain_settings(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getPlainSettings"
+        )
+
+    async def set_plain_shipment(
+        self, doc_id: str, address_id: str, route_id: str
+    ) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        address_id = self._validate_non_empty_string(address_id, "Address ID")
+        route_id = self._validate_non_empty_string(route_id, "Route ID")
+
+        json_data = {"DocId": doc_id, "AddressId": address_id, "RouteId": route_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/setPlainShipment", json_data=json_data
+        )
+
+    async def get_self_delivery_settings(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/invoice8/getSelfDeliverySettings",
+            json_data=json_data,
+        )
+
+    async def set_self_delivery_shipment(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/invoice8/setSelfDeliveryShipment",
+            json_data=json_data,
+        )
+
+    async def get_courier_delivery_settings(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/invoice8/getCourierDeliverySettings",
+            json_data=json_data,
+        )
+
+    async def get_courier_towns(self, doc_id: str, delivery_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        delivery_id = self._validate_non_empty_string(delivery_id, "Delivery ID")
+
+        json_data = {"DocId": doc_id, "DeliveryId": delivery_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getCourierTowns", json_data=json_data
+        )
+
+    async def get_courier_addresses(
+        self, doc_id: str, delivery_id: str, town_id: str
+    ) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        delivery_id = self._validate_non_empty_string(delivery_id, "Delivery ID")
+        town_id = self._validate_non_empty_string(town_id, "Town ID")
+
+        json_data = {"DocId": doc_id, "DeliveryId": delivery_id, "TownId": town_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getCourierAddresses", json_data=json_data
+        )
+
+    async def set_courier_shipment(
+        self,
+        doc_id: str,
+        delivery_type_id: str,
+        service_type_id: str,
+        town_id: str,
+        address_id: str,
+        contact_person_id: str,
+        drop_shipping: bool = False,
+        consignee: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        delivery_type_id = self._validate_non_empty_string(
+            delivery_type_id, "Delivery Type ID"
+        )
+        service_type_id = self._validate_non_empty_string(
+            service_type_id, "Service Type ID"
+        )
+        town_id = self._validate_non_empty_string(town_id, "Town ID")
+        address_id = self._validate_non_empty_string(address_id, "Address ID")
+        contact_person_id = self._validate_non_empty_string(
+            contact_person_id, "Contact Person ID"
+        )
+
+        json_data = {
+            "DocId": doc_id,
+            "DeliveryTypeId": delivery_type_id,
+            "ServiceTypeId": service_type_id,
+            "TownId": town_id,
+            "AddressId": address_id,
+            "ContactPersonId": contact_person_id,
+            "DropShipping": drop_shipping,
+        }
+
+        if consignee:
+            json_data["Consignee"] = consignee.strip()
+
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/setCourierShipment", json_data=json_data
+        )
+
+    async def get_consignee_by_okpo(self, okpo: str, phone: str) -> Dict[str, Any]:
+        okpo = self._validate_non_empty_string(okpo, "OKPO")
+        phone = self._validate_non_empty_string(phone, "Phone")
+
+        json_data = {"OKPO": okpo, "Phone": phone}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getConsigneeByOkpo", json_data=json_data
+        )
+
+    async def get_basket_rests(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getBasketRests"
+        )
+
+    async def get_rests(self, rests: List[int]) -> Dict[str, Any]:
+        if not rests:
+            raise OmegaAPIError(400, "Rests list cannot be empty")
+
+        for i, rest in enumerate(rests):
+            if not isinstance(rest, int):
+                raise OmegaAPIError(400, f"Rest at index {i} must be an integer")
+
+        json_data = {"Rests": rests}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getRests", json_data=json_data
+        )
+
+    async def get_contract_sro(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getContractSRO"
+        )
+
+    async def delete_item_from_invoice(
+        self, doc_id: str, product_id: int
+    ) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+        if not isinstance(product_id, int):
+            raise OmegaAPIError(400, "Product ID must be an integer")
+
+        json_data = {"DocId": doc_id, "ProductId": product_id}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/invoice8/deleteItemFromInvoice",
+            json_data=json_data,
+        )
+
+    async def update_products_quantity(
+        self, doc_id: str, products: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        if not products:
+            raise OmegaAPIError(400, "Products list cannot be empty")
+
+        for i, product in enumerate(products):
+            if not isinstance(product, dict):
+                raise OmegaAPIError(400, f"Product at index {i} must be a dictionary")
+            if "ProductId" not in product:
+                raise OmegaAPIError(
+                    400, f"Product at index {i} must have 'ProductId' field"
+                )
+            if "Count" not in product:
+                raise OmegaAPIError(
+                    400, f"Product at index {i} must have 'Count' field"
+                )
+
+        json_data = {"DocId": doc_id, "Products": products}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/invoice8/updateProductsQuantity",
+            json_data=json_data,
+        )
+
+    async def delete_invoice(self, doc_id: str) -> Dict[str, Any]:
+        doc_id = self._validate_non_empty_string(doc_id, "Document ID")
+
+        json_data = {"DocId": doc_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/deleteInvoice", json_data=json_data
+        )
+
+    async def get_planned_delivery_address(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/invoice8/getPlannedDeliveryAddress"
+        )
+
     async def close(self) -> None:
         if self._client:
             await self._client.aclose()

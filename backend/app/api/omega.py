@@ -155,6 +155,109 @@ class GetExpenseDocumentDetailsRequest(BaseModel):
     doc_id: str = Field(..., description="Document ID")
 
 
+class ReserveInvoiceRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+
+
+class CodInvoiceRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+    summ_cod: str = Field(..., description="COD sum")
+
+
+class ReadyInvoiceRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+
+
+class AddProductToInvoiceRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+    prod_id: int = Field(..., description="Product ID")
+    count: int = Field(..., gt=0, description="Product count must be positive")
+
+
+class MoveProductsFromBasketToInvoiceRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+
+
+class GetInvoiceRequest(BaseModel):
+    doc_id: str = Field(..., description="Document ID")
+
+
+class SetInvoiceCustomerRequest(BaseModel):
+    customer_id: str = Field(..., description="Customer ID")
+    doc_id: str = Field(..., description="Document ID")
+
+
+class GetContractsRequest(BaseModel):
+    customer_id: str = Field(..., description="Customer ID")
+
+
+class SetInvoiceContractRequest(BaseModel):
+    contract_id: str = Field(..., description="Contract ID")
+    doc_id: str = Field(..., description="Document ID")
+
+
+class GetWarehousesRequest(BaseModel):
+    customer_id: str = Field(..., description="Customer ID")
+    shipment_type_id: Optional[str] = Field(None, description="Shipment type ID")
+    delivery_address_id: Optional[str] = Field(None, description="Delivery address ID")
+
+
+class SetInvoiceWarehouseRequest(BaseModel):
+    warehouse_id: str = Field(..., description="Warehouse ID")
+    doc_id: str = Field(..., description="Document ID")
+
+
+class DocIdRequest(BaseModel):
+    doc_id: str
+
+
+class SetPlainShipmentRequest(BaseModel):
+    doc_id: str
+    address_id: str
+    route_id: str
+
+
+class CourierTownsRequest(BaseModel):
+    doc_id: str
+    delivery_id: str
+
+
+class CourierAddressesRequest(BaseModel):
+    doc_id: str
+    delivery_id: str
+    town_id: str
+
+
+class SetCourierShipmentRequest(BaseModel):
+    doc_id: str
+    delivery_type_id: str
+    service_type_id: str
+    town_id: str
+    address_id: str
+    contact_person_id: str
+    drop_shipping: bool = False
+    consignee: Optional[str] = None
+
+
+class ConsigneeByOkpoRequest(BaseModel):
+    okpo: str
+    phone: str
+
+
+class GetRestsRequest(BaseModel):
+    rests: List[int]
+
+
+class DeleteItemFromInvoiceRequest(BaseModel):
+    doc_id: str
+    product_id: int
+
+
+class UpdateProductsQuantityRequest(BaseModel):
+    doc_id: str
+    products: List[Dict[str, Any]]
+
+
 async def handle_api_errors(func, *args, **kwargs):
     try:
         return await func(*args, **kwargs)
@@ -397,7 +500,6 @@ async def get_expense_document_details(request: GetExpenseDocumentDetailsRequest
         )
 
 
-# GET endpoints (existing ones kept for backward compatibility)
 @router.get("/basket/add-product")
 async def add_product_to_basket_query(
     product_id: int = Query(..., description="Product ID"),
@@ -485,3 +587,245 @@ async def get_expense_document_details_query(
 ):
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(adapter.get_expense_document_details, doc_id)
+
+
+@router.post("/invoice/add")
+async def add_invoice():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.add_invoice)
+
+
+@router.post("/invoice/reserve")
+async def reserve_invoice(request: ReserveInvoiceRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.reserve_invoice, request.doc_id)
+
+
+@router.post("/invoice/cod")
+async def cod_invoice(request: CodInvoiceRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.cod_invoice, request.doc_id, request.summ_cod
+        )
+
+
+@router.post("/invoice/ready")
+async def ready_invoice(request: ReadyInvoiceRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.ready_invoice, request.doc_id)
+
+
+@router.post("/invoice/add-product")
+async def add_product_to_invoice(request: AddProductToInvoiceRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.add_product_to_invoice,
+            request.doc_id,
+            request.prod_id,
+            request.count,
+        )
+
+
+@router.post("/invoice/move-products-from-basket")
+async def move_products_from_basket_to_invoice(
+    request: MoveProductsFromBasketToInvoiceRequest,
+):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.move_products_from_basket_to_invoice, request.doc_id
+        )
+
+
+@router.post("/invoice/list")
+async def get_invoice_list():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_invoice_list)
+
+
+@router.post("/invoice/get")
+async def get_invoice(request: GetInvoiceRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_invoice, request.doc_id)
+
+
+@router.post("/invoice/customers")
+async def get_customers():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_customers)
+
+
+@router.post("/invoice/set-customer")
+async def set_invoice_customer(request: SetInvoiceCustomerRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.set_invoice_customer, request.customer_id, request.doc_id
+        )
+
+
+@router.post("/invoice/contracts")
+async def get_contracts(request: GetContractsRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contracts, request.customer_id)
+
+
+@router.post("/invoice/set-contract")
+async def set_invoice_contract(request: SetInvoiceContractRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.set_invoice_contract, request.contract_id, request.doc_id
+        )
+
+
+@router.post("/invoice/warehouses")
+async def get_warehouses(request: GetWarehousesRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_warehouses,
+            request.customer_id,
+            request.shipment_type_id,
+            request.delivery_address_id,
+        )
+
+
+@router.post("/invoice/set-warehouse")
+async def set_invoice_warehouse(request: SetInvoiceWarehouseRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.set_invoice_warehouse, request.warehouse_id, request.doc_id
+        )
+
+
+@router.post("/invoice8/shipment-types")
+async def get_shipment_types():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_shipment_types)
+
+
+@router.post("/invoice8/plain-settings")
+async def get_plain_settings():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_plain_settings)
+
+
+@router.post("/invoice8/set-plain-shipment")
+async def set_plain_shipment(request: SetPlainShipmentRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.set_plain_shipment,
+            request.doc_id,
+            request.address_id,
+            request.route_id,
+        )
+
+
+@router.post("/invoice8/self-delivery-settings")
+async def get_self_delivery_settings(request: DocIdRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_self_delivery_settings, request.doc_id
+        )
+
+
+@router.post("/invoice8/set-self-delivery-shipment")
+async def set_self_delivery_shipment(request: DocIdRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.set_self_delivery_shipment, request.doc_id
+        )
+
+
+@router.post("/invoice8/courier-delivery-settings")
+async def get_courier_delivery_settings(request: DocIdRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_courier_delivery_settings, request.doc_id
+        )
+
+
+@router.post("/invoice8/courier-towns")
+async def get_courier_towns(request: CourierTownsRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_courier_towns, request.doc_id, request.delivery_id
+        )
+
+
+@router.post("/invoice8/courier-addresses")
+async def get_courier_addresses(request: CourierAddressesRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_courier_addresses,
+            request.doc_id,
+            request.delivery_id,
+            request.town_id,
+        )
+
+
+@router.post("/invoice8/set-courier-shipment")
+async def set_courier_shipment(request: SetCourierShipmentRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.set_courier_shipment,
+            request.doc_id,
+            request.delivery_type_id,
+            request.service_type_id,
+            request.town_id,
+            request.address_id,
+            request.contact_person_id,
+            request.drop_shipping,
+            request.consignee,
+        )
+
+
+@router.post("/invoice8/consignee-by-okpo")
+async def get_consignee_by_okpo(request: ConsigneeByOkpoRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_consignee_by_okpo, request.okpo, request.phone
+        )
+
+
+@router.post("/invoice8/basket-rests")
+async def get_basket_rests():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_basket_rests)
+
+
+@router.post("/invoice8/rests")
+async def get_rests(request: GetRestsRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_rests, request.rests)
+
+
+@router.post("/invoice8/contract-sro")
+async def get_contract_sro():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_contract_sro)
+
+
+@router.post("/invoice8/delete-item")
+async def delete_item_from_invoice(request: DeleteItemFromInvoiceRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.delete_item_from_invoice, request.doc_id, request.product_id
+        )
+
+
+@router.post("/invoice8/update-products-quantity")
+async def update_products_quantity(request: UpdateProductsQuantityRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.update_products_quantity, request.doc_id, request.products
+        )
+
+
+@router.post("/invoice8/delete-invoice")
+async def delete_invoice(request: DocIdRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.delete_invoice, request.doc_id)
+
+
+@router.post("/invoice8/planned-delivery-address")
+async def get_planned_delivery_address():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_planned_delivery_address)
