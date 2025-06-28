@@ -155,11 +155,9 @@ class OmegaAdapter:
             raise OmegaAPIError(400, f"{field_name} cannot be empty")
         return value.strip()
 
-    # Profile endpoints
     async def get_account(self) -> Dict[str, Any]:
         return await self._make_request("POST", "/public/api/v1.0/profile/account")
 
-    # Basket endpoints
     async def add_product_to_basket(
         self, product_id: int, count: int
     ) -> Dict[str, Any]:
@@ -835,6 +833,193 @@ class OmegaAdapter:
     async def get_planned_delivery_address(self) -> Dict[str, Any]:
         return await self._make_request(
             "POST", "/public/api/v1.0/invoice8/getPlannedDeliveryAddress"
+        )
+
+    async def get_prices(self) -> Dict[str, Any]:
+        return await self._make_request("POST", "/public/api/v1.0/price/getPrices")
+
+    async def enqueue_price(self, price_id: int) -> Dict[str, Any]:
+        if not isinstance(price_id, int):
+            raise OmegaAPIError(400, "Price ID must be an integer")
+
+        json_data = {"Id": price_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/price/enqueuePrice", json_data=json_data
+        )
+
+    async def download_price(self, price_id: int) -> Dict[str, Any]:
+        if not isinstance(price_id, int):
+            raise OmegaAPIError(400, "Price ID must be an integer")
+
+        json_data = {"Id": price_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/price/downloadPrice", json_data=json_data
+        )
+
+    # Receivables endpoints
+    async def get_receivables_data(self, date_to: str) -> Dict[str, Any]:
+        date_to = self._validate_date_format(date_to, "DateTo")
+        json_data = {"DateTo": date_to}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/receivables/getReceivablesData",
+            json_data=json_data,
+        )
+
+    # Search endpoints
+    async def search_products(
+        self,
+        search_phrase: str,
+        rest: int = 0,
+        from_index: int = 0,
+        count: int = 20,
+    ) -> Dict[str, any]:
+        search_phrase = self._validate_non_empty_string(search_phrase, "SearchPhrase")
+        if not isinstance(rest, int) or rest < 0:
+            raise OmegaAPIError(400, "Rest must be a non-negative integer")
+        if not isinstance(from_index, int) or from_index < 0:
+            raise OmegaAPIError(400, "From index must be a non-negative integer")
+        if not isinstance(count, int) or count <= 0:
+            raise OmegaAPIError(400, "Count must be a positive integer")
+
+        json_data = {
+            "SearchPhrase": search_phrase,
+            "Rest": rest,
+            "From": from_index,
+            "Count": count,
+        }
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/search", json_data=json_data
+        )
+
+    async def search_brand(
+        self, code: str, brand: str, rest: int = 0
+    ) -> Dict[str, Any]:
+        code = self._validate_non_empty_string(code, "Code")
+        brand = self._validate_non_empty_string(brand, "Brand")
+        if not isinstance(rest, int) or rest < 0:
+            raise OmegaAPIError(400, "Rest must be a non-negative integer")
+
+        json_data = {"Code": code, "Brand": brand, "Rest": rest}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/searchBrand", json_data=json_data
+        )
+
+    async def search_brand_by_id(
+        self, code: str, brand_id: int, rest: int = 0
+    ) -> Dict[str, Any]:
+        code = self._validate_non_empty_string(code, "Code")
+        if not isinstance(brand_id, int):
+            raise OmegaAPIError(400, "Brand ID must be an integer")
+        if not isinstance(rest, int) or rest < 0:
+            raise OmegaAPIError(400, "Rest must be a non-negative integer")
+
+        json_data = {"Code": code, "BrandId": brand_id, "Rest": rest}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/searchBrandById", json_data=json_data
+        )
+
+    async def search_product_id_list(
+        self, product_id_list: List[int]
+    ) -> Dict[str, Any]:
+        if not isinstance(product_id_list, list) or not product_id_list:
+            raise OmegaAPIError(400, "Product ID list cannot be empty")
+
+        for product_id in product_id_list:
+            if not isinstance(product_id, int):
+                raise OmegaAPIError(400, "All product IDs must be integers")
+
+        json_data = {"ProductIdList": [str(pid) for pid in product_id_list]}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/searchProductIdList", json_data=json_data
+        )
+
+    async def search_product_card_list(
+        self, product_card_list: List[str]
+    ) -> Dict[str, Any]:
+        if not isinstance(product_card_list, list) or not product_card_list:
+            raise OmegaAPIError(400, "Product card list cannot be empty")
+
+        for card in product_card_list:
+            if not isinstance(card, str) or not card.strip():
+                raise OmegaAPIError(400, "All product cards must be non-empty strings")
+
+        json_data = {"ProductCardList": product_card_list}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/product/searchProductCardList",
+            json_data=json_data,
+        )
+
+    async def get_product_details(self, product_id_list: List[int]) -> Dict[str, Any]:
+        if not isinstance(product_id_list, list) or not product_id_list:
+            raise OmegaAPIError(400, "Product ID list cannot be empty")
+
+        for product_id in product_id_list:
+            if not isinstance(product_id, int):
+                raise OmegaAPIError(400, "All product IDs must be integers")
+
+        json_data = {"ProductIdList": product_id_list}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/details", json_data=json_data
+        )
+
+    async def get_images_info(self) -> Dict[str, Any]:
+        return await self._make_request("POST", "/public/api/v1.0/product/imagesInfo")
+
+    async def get_product_image(self, product_id: int, number: int) -> Dict[str, Any]:
+        if not isinstance(product_id, int):
+            raise OmegaAPIError(400, "Product ID must be an integer")
+        if not isinstance(number, int) or number < 0:
+            raise OmegaAPIError(400, "Number must be a non-negative integer")
+
+        json_data = {"ProductId": product_id, "Number": number}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/image", json_data=json_data
+        )
+
+    async def get_pricelist_paged(self, product_id: int, number: int) -> Dict[str, Any]:
+        if not isinstance(product_id, int):
+            raise OmegaAPIError(400, "Product ID must be an integer")
+        if not isinstance(number, int) or number < 1:
+            raise OmegaAPIError(400, "Number must be a positive integer")
+
+        json_data = {"ProductId": product_id, "Number": number}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/pricelist/paged", json_data=json_data
+        )
+
+    async def get_tecdoc_crosses(self, product_id: int) -> Dict[str, Any]:
+        if not isinstance(product_id, int):
+            raise OmegaAPIError(400, "Product ID must be an integer")
+
+        json_data = {"ProductId": product_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/getTecDocCrosses", json_data=json_data
+        )
+
+    async def get_all_crosses(self, product_id: int) -> Dict[str, Any]:
+        if not isinstance(product_id, int):
+            raise OmegaAPIError(400, "Product ID must be an integer")
+
+        json_data = {"ProductId": product_id}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/getAllCrosses", json_data=json_data
+        )
+
+    async def get_brands(
+        self, page_index: int = 0, page_size: int = 100, rest: int = 0
+    ) -> Dict[str, Any]:
+        if not isinstance(page_index, int) or page_index < 0:
+            raise OmegaAPIError(400, "Page index must be a non-negative integer")
+        if not isinstance(page_size, int) or page_size <= 0:
+            raise OmegaAPIError(400, "Page size must be a positive integer")
+        if not isinstance(rest, int) or rest < 0:
+            raise OmegaAPIError(400, "Rest must be a non-negative integer")
+
+        json_data = {"PageIndex": page_index, "PageSize": page_size, "Rest": rest}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/product/getBrands", json_data=json_data
         )
 
     async def close(self) -> None:

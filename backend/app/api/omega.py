@@ -1,5 +1,5 @@
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator
@@ -68,7 +68,7 @@ class UploadPhotoRequest(BaseModel):
     file_name: str = Field(..., description="File name with .jpg extension")
 
     @field_validator("file_name")
-    def validate_file_extension(cls, v):
+    def validate_file_extension(self, v):
         if not v.lower().endswith(".jpg"):
             raise ValueError("File name must end with .jpg extension")
         return v
@@ -141,7 +141,7 @@ class GetExpenseDocumentListRequest(BaseModel):
     end_date: str = Field(..., description="End date in DD.MM.YYYY format")
 
     @field_validator("start_date", "end_date")
-    def validate_date_format(cls, v):
+    def validate_date_format(self, v):
         from datetime import datetime
 
         try:
@@ -256,6 +256,61 @@ class DeleteItemFromInvoiceRequest(BaseModel):
 class UpdateProductsQuantityRequest(BaseModel):
     doc_id: str
     products: List[Dict[str, Any]]
+
+
+class PriceRequest(BaseModel):
+    price_id: int = Field(..., description="Price ID")
+
+
+class ReceivablesRequest(BaseModel):
+    date_to: str = Field(..., description="Date in DD.MM.YYYY format")
+
+
+class SearchRequest(BaseModel):
+    search_phrase: str = Field(..., description="Search phrase")
+    rest: int = Field(0, ge=0, description="Rest filter")
+    from_index: int = Field(0, ge=0, description="Starting index")
+    count: int = Field(20, gt=0, description="Number of results")
+
+
+class SearchBrandRequest(BaseModel):
+    code: str = Field(..., description="Product code")
+    brand: str = Field(..., description="Brand name")
+    rest: int = Field(0, ge=0, description="Rest filter")
+
+
+class SearchBrandByIdRequest(BaseModel):
+    code: str = Field(..., description="Product code")
+    brand_id: int = Field(..., description="Brand ID")
+    rest: int = Field(0, ge=0, description="Rest filter")
+
+
+class ProductIdListRequest(BaseModel):
+    product_id_list: List[int] = Field(..., description="List of product IDs")
+
+
+class ProductCardListRequest(BaseModel):
+    product_card_list: List[str] = Field(..., description="List of product cards")
+
+
+class ProductImageRequest(BaseModel):
+    product_id: int = Field(..., description="Product ID")
+    number: int = Field(..., ge=0, description="Image number")
+
+
+class PricelistPagedRequest(BaseModel):
+    product_id: int = Field(..., description="Product ID")
+    number: int = Field(..., gt=0, description="Page number")
+
+
+class ProductIdRequest(BaseModel):
+    product_id: int = Field(..., description="Product ID")
+
+
+class BrandsRequest(BaseModel):
+    page_index: int = Field(0, ge=0, description="Page index")
+    page_size: int = Field(100, gt=0, description="Page size")
+    rest: int = Field(0, ge=0, description="Rest filter")
 
 
 async def handle_api_errors(func, *args, **kwargs):
@@ -829,3 +884,124 @@ async def delete_invoice(request: DocIdRequest):
 async def get_planned_delivery_address():
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(adapter.get_planned_delivery_address)
+
+
+@router.post("/price/list")
+async def get_prices() -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_prices)
+
+
+@router.post("/price/enqueue")
+async def enqueue_price(request: PriceRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.enqueue_price, request.price_id)
+
+
+@router.post("/price/download")
+async def download_price(request: PriceRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.download_price, request.price_id)
+
+
+# Receivables endpoints
+@router.post("/receivables/data")
+async def get_receivables_data(request: ReceivablesRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_receivables_data, request.date_to)
+
+
+# Search endpoints
+@router.post("/product/search")
+async def search_products(request: SearchRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.search_products,
+            request.search_phrase,
+            request.rest,
+            request.from_index,
+            request.count,
+        )
+
+
+@router.post("/product/search-brand")
+async def search_brand(request: SearchBrandRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.search_brand, request.code, request.brand, request.rest
+        )
+
+
+@router.post("/product/search-brand-by-id")
+async def search_brand_by_id(request: SearchBrandByIdRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.search_brand_by_id, request.code, request.brand_id, request.rest
+        )
+
+
+@router.post("/product/search-product-id-list")
+async def search_product_id_list(request: ProductIdListRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.search_product_id_list, request.product_id_list
+        )
+
+
+@router.post("/product/search-product-card-list")
+async def search_product_card_list(request: ProductCardListRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.search_product_card_list, request.product_card_list
+        )
+
+
+# Product endpoints
+@router.post("/product/details")
+async def get_product_details(request: ProductIdListRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_product_details, request.product_id_list
+        )
+
+
+@router.post("/product/images-info")
+async def get_images_info() -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_images_info)
+
+
+@router.post("/product/image")
+async def get_product_image(request: ProductImageRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_product_image, request.product_id, request.number
+        )
+
+
+@router.post("/product/pricelist-paged")
+async def get_pricelist_paged(request: PricelistPagedRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_pricelist_paged, request.product_id, request.number
+        )
+
+
+@router.post("/product/tecdoc-crosses")
+async def get_tecdoc_crosses(request: ProductIdRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_tecdoc_crosses, request.product_id)
+
+
+@router.post("/product/all-crosses")
+async def get_all_crosses(request: ProductIdRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_all_crosses, request.product_id)
+
+
+@router.post("/product/brands")
+async def get_brands(request: BrandsRequest) -> Dict[str, Any]:
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(
+            adapter.get_brands, request.page_index, request.page_size, request.rest
+        )
