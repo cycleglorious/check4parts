@@ -9,7 +9,13 @@
 	<button
 		class:font-bold={page === pageValue}
 		class="flex items-center gap-2 text-xl"
-		onclick={() => (subMenuOpen = pageValue)}
+		onclick={() => {
+			if (subMenuOpen === pageValue) {
+				subMenuOpen = undefined;
+				return;
+			}
+			subMenuOpen = pageValue;
+		}}
 	>
 		<img
 			src={page === pageValue ? `/settings-icon-selected.svg` : `/settings-icon.svg`}
@@ -48,6 +54,14 @@
 				{ page: 'trading-points', title: 'Торгівельні точки' },
 				{ page: 'users', title: 'Користувачі' },
 				{ page: 'suppliers', title: 'Постачальники' }
+			])}
+		</li>
+		<li>
+			{@render menuItem('prices', 'Прайси')}
+			{@render subMenu('prices', undefined, [
+				{ page: '', title: 'Історія' },
+				{ page: 'loader', title: 'Завантажити прайси' },
+				{ page: 'search', title: 'Пошук' }
 			])}
 		</li>
 	</ul>

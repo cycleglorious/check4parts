@@ -2,7 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { type Handle, redirect } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_PRICES_URL, PUBLIC_SUPABASE_PRICES_ANON_KEY } from '$env/static/public';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase: Handle = async ({ event, resolve }) => {
 	/**
@@ -66,6 +67,18 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	const { session, user } = await event.locals.safeGetSession();
 	event.locals.session = session;
 	event.locals.user = user;
+
+	event.locals.supabasePrices = createClient(
+		PUBLIC_SUPABASE_PRICES_URL,
+		PUBLIC_SUPABASE_PRICES_ANON_KEY,
+		{
+			global: {
+				headers: {
+					Authorization: `Bearer ${session?.access_token}`
+				}
+			}
+		}
+	);
 
 	if (!event.locals.session && event.url.pathname.startsWith('/home')) {
 		redirect(303, '/auth/login');

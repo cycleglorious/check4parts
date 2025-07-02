@@ -43,7 +43,11 @@
 	"dependencies": {
 		"@supabase/ssr": "^0.5.2",
 		"@supabase/supabase-js": "^2.49.1",
+		"@types/jsonwebtoken": "^9.0.10",
 		"install": "^0.13.0",
-		"svelte-french-toast": "^1.2.0"
+		"jsonwebtoken": "^9.0.2",
+		"svelte-french-toast": "^1.2.0",
+		"uuid": "^11.1.0",
+		"xlsx": "^0.18.5"
 	}
 }

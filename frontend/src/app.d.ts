@@ -6,9 +6,11 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			supabase: SupabaseClient<Database>;
+			supabasePrices: SupabaseClient<Database>;
 			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
 			session: Session | null;
 			user: User | null;
+			jwt?: string | null;
 		}
 		interface PageData {
 			session: Session | null;
