@@ -3,6 +3,7 @@
 	import { autoMapHeaders } from '$lib/utils/loader/AutoMap.js';
 	import { processFile } from '$lib/utils/loader/ProcessFile.js';
 	import Worker from '$lib/utils/workers/UploadFiles?worker';
+	import { PUBLIC_SUPABASE_PRICES_ANON_KEY, PUBLIC_SUPABASE_PRICES_URL } from '$env/static/public';
 
 	let { data, form } = $props();
 
@@ -39,11 +40,22 @@
 		const worker = new Worker();
 		const cleanTemplate = JSON.parse(JSON.stringify(template));
 
+		console.log('Starting worker with data:', {
+			fileData,
+			template: cleanTemplate,
+			chunkSize: 10000,
+			session: data.session,
+			PUBLIC_SUPABASE_PRICES_URL,
+			PUBLIC_SUPABASE_PRICES_ANON_KEY
+		});
+
 		worker.postMessage({
 			fileData,
 			template: cleanTemplate,
 			chunkSize: 10000,
-			session: data.session
+			session: data.session,
+			supabaseUrl: PUBLIC_SUPABASE_PRICES_URL,
+			supabaseAnonKey: PUBLIC_SUPABASE_PRICES_ANON_KEY
 		});
 
 		worker.onmessage = (e) => {

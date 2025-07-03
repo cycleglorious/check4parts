@@ -1,8 +1,6 @@
 /// <reference lib="webworker" />
-import { PUBLIC_SUPABASE_PRICES_ANON_KEY, PUBLIC_SUPABASE_PRICES_URL } from "$env/static/public";
-import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type Session } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
-import type { IMPORTANT_HEADERS } from "../loader/AutoMap";
 
 interface TemplateItem {
   value: string;
@@ -16,20 +14,23 @@ interface FileRow {
 
 self.onmessage = async (e) => {
   try {
-    const { fileData, template, chunkSize = 1000, session } = e.data as {
+    const { fileData, template, chunkSize = 1000, session, supabaseUrl, supabaseAnonKey } = e.data as {
       fileData: FileRow[];
       template: TemplateItem[];
       chunkSize?: number;
       session: Session | null
+      supabaseUrl: string;
+      supabaseAnonKey: string;
     };
+
+    console.log({supabaseUrl, supabaseAnonKey});
 
     const uploadId = uuidv4();
     const uploadedFiles: string[] = [];
-    const total = fileData.length;
 
     const supabase = createClient(
-      PUBLIC_SUPABASE_PRICES_URL,
-      PUBLIC_SUPABASE_PRICES_ANON_KEY,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         global: {
           headers: {

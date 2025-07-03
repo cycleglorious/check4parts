@@ -3,6 +3,8 @@
 	import toast from 'svelte-french-toast';
 	import ActiveStatteBadge from './(components)/ActiveStatteBadge.svelte';
 	import EditModal from './(components)/EditModal.svelte';
+	import { enhance } from '$app/forms';
+	import editLogo from '/static/edit-button-icon.svg';
 
 	let { data, form } = $props();
 	let { supplier } = $derived(data);
@@ -47,23 +49,30 @@
 
 <header class="flex items-center justify-end">
 	{#if editPage}
-		<form action="?/editState" method="post">
+		<div class="flex gap-2">
 			<button
 				class="btn preset-outlined-surface-700-300 w-40"
-				onclick={() => ((selectedState = supplier.state), (editPage = false))}>Скасувати</button
+				onclick={() => {
+					selectedState = supplier.state; // Reset state
+					editPage = false; // Exit edit mode
+				}}
 			>
-			<button class="btn preset-filled-primary-950-50 w-40" type="submit">Зберегти</button>
-			<input type="hidden" name="id" value={supplier.id} />
-			<input type="hidden" name="state" value={selectedState} />
-		</form>
+				Скасувати
+			</button>
+			<form action="?/editState" method="post" class="contents" use:enhance>
+				<button class="btn preset-filled-primary-950-50 w-40" type="submit">Зберегти</button>
+				<input type="hidden" name="id" value={supplier.id} />
+				<input type="hidden" name="state" value={selectedState} />
+			</form>
+		</div>
 	{:else}
-		<div>
-			<button class="btn preset-outlined-surface-700-300 w-40" onclick={() => (editPage = true)}
-				>Редагувати</button
-			>
-			<button class="btn preset-filled-error-950-50 w-40" onclick={() => (deleteModalOpen = true)}
-				>Видалити</button
-			>
+		<div class="flex gap-2">
+			<button class="btn preset-outlined-surface-700-300 w-40" onclick={() => (editPage = true)}>
+				Редагувати
+			</button>
+			<button class="btn preset-filled-error-950-50 w-40" onclick={() => (deleteModalOpen = true)}>
+				Видалити
+			</button>
 		</div>
 	{/if}
 </header>
@@ -81,12 +90,12 @@
 				{#if editPage}
 					<span>
 						<button onclick={() => (editModalOpen = true)}>
-							<img class="size-7" src="/edit-button-icon.svg" alt="edit" />
+							<img class="size-7" src={editLogo} alt="edit" width="28" height="28" />
 						</button>
 					</span>
 				{/if}
 			</div>
-			<table class="table **:border-none">
+			<table class="**:border-none table">
 				<tbody class="*:nth-[even]:bg-surface-100">
 					{#each supplier.data as data}
 						<tr>
