@@ -23,8 +23,6 @@ self.onmessage = async (e) => {
       supabaseAnonKey: string;
     };
 
-    console.log({supabaseUrl, supabaseAnonKey});
-
     const uploadId = uuidv4();
     const uploadedFiles: string[] = [];
 
@@ -68,7 +66,7 @@ self.onmessage = async (e) => {
       return entry;
     })
     .filter((entry) => {  
-      return (!entry.article || entry.article.trim() === "") ? false : true;
+      return !(!entry.article || entry.article.trim() === "");
     });
   
 

@@ -7,24 +7,42 @@
 			id: string;
 			name: string;
 			code: string;
-			description: string; // can be big string
+			description: string;
 			image: string;
-			brand: {
-				id?: string;
-				name: string; // name of brand
-			};
+			brand: string;
 			details: {
 				id?: string;
 				value: string; // value to display
 				title: string; // title to display
-				name: string; // name in database column
+				name?: string; // name in database column
+			}[];
+			crosses?: {
+				// можливо щоб це веталося або в окремо ендпойнті (якщо таке є)
+				id: string;
+				name: string;
+				code: string;
+				brand: string;
+				description: string;
+			}[];
+			additional?: {
+				// супутні товари, також можливо в окремому ендпойнті
+				id: string;
+				name: string;
+				code: string;
+				min_quantity: number;
 			}[];
 		};
 		rests: {
 			id?: string;
 			provider: {
 				id?: string;
-				name: string; // name of provider
+				name: string;
+				short_name?: string;
+			};
+			werehouse: {
+				id?: string;
+				name: string;
+				short_name?: string;
 			};
 			quantity: number; // quantity of part
 			delivery_time: string; // delivery time of part
@@ -38,12 +56,12 @@
 	let showDetails = $state(false);
 </script>
 
-<div class="card border-primary-950 flex flex-col overflow-hidden rounded-xl border-1">
+<div class="card border-primary-950 border-1 flex flex-col overflow-hidden rounded-xl">
 	<div
 		id="header"
 		class="bg-primary-950 text-primary-50 flex items-center justify-between gap-2 px-4 py-2"
 	>
-		<h3 class="h5">{part.brand.name}</h3>
+		<h3 class="h5">{part.brand}</h3>
 		<button
 			type="button"
 			class="btn preset-filled-primary-950-50"
@@ -67,11 +85,13 @@
 						<img src={part.image} alt={part.name} />
 					</div>
 					<div>
-						<a class="text-xl uppercase underline" href="/home/parts/{part.id}">{part.id}</a>
+						<a class="text-xl uppercase underline" href="/home/search/{part.brand}/{part.id}"
+							>{part.id}</a
+						>
 						<p class="font-light">{part.name}</p>
 						<p class="font-light">{part.description}</p>
 						<p class="font-light">Код: {part.code}</p>
-						<p class="font-light">Виробник: {part.brand.name}</p>
+						<p class="font-light">Виробник: {part.brand}</p>
 					</div>
 				</div>
 				<div id="rests" class="overflow-auto">

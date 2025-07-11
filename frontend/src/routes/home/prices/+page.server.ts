@@ -25,25 +25,9 @@ export const load: PageServerLoad = async ({ locals: { supabasePrices, supabase 
     provider_name: priceEntry.providers?.name || null
   }));
 
-  console.log({ enrichedPriceHistory, error });
   return {
     price_history: enrichedPriceHistory ?? [],
-    error: error ? error.message : null
+    error: error
   };
 };
 
-export const actions = {
-  create: async ({ locals: { supabasePrices } }) => {
-
-    const { data, error } = await supabasePrices
-      .from('price_history')
-      .insert({
-        missing_articles_file: 'Test Price',
-        created_at: new Date().toISOString(),
-      })
-      .select();
-
-    console.log({ data, error });
-
-  }
-};

@@ -7,6 +7,7 @@ declare global {
 		interface Locals {
 			supabase: SupabaseClient<Database>;
 			supabasePrices: SupabaseClient<Database>;
+			supabaseTecdoc: SupabaseClient<Database>;
 			safeGetSession: () => Promise<{ session: Session | null; user: User | null }>;
 			session: Session | null;
 			user: User | null;

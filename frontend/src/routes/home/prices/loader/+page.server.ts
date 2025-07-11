@@ -127,7 +127,7 @@ export const actions: Actions = {
           };
         }
       },
-      10
+      5
     );
 
     const successfulChunks = chunkResults.filter((r) => r.success);
@@ -177,10 +177,10 @@ export const actions: Actions = {
     // 5. Підрахунок актуальних записів
     const { count, error: countError } = await supabase
       .from("prices")
-      .select("*", { count: "exact", head: true })
-      .eq("provider_id", providerID)
+      .select("id", { count: "exact" })
+      .eq("history_id", historyId)
 
-    console.log(`✅ Total current prices for provider ${providerID}:`, count);
+    console.log(`✅ Total current prices for provider ${providerID}:`, count, countError);
 
     // 6. Повернення результату (без змін)
     return {

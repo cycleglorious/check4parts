@@ -1,4 +1,5 @@
 import Worker from '$lib/utils/workers/FileProcessWorker.ts?worker';
+import { on } from 'svelte/events';
 
 export const processFile = async (
   files: FileList,
@@ -8,9 +9,11 @@ export const processFile = async (
   {
     onPreview,
     onFull,
+    onProgress,
   }: {
     onPreview: (data: { previewData: any[] }) => void,
     onFull: (data: { fileData: any[], fileName: string, fileType: string, fileSize: number }) => void
+    onProgress: (data: { message: string, percentage: number }) => void,
   }
 ) => {
   if (!files?.[0]) return;
@@ -30,8 +33,10 @@ export const processFile = async (
         reject(new Error(error));
         return;
       }
-
-      if (type === "preview") {
+      if (type === "progress") {
+        onProgress({ message: e.data.message, percentage: e.data.percentage });
+        console.log("Progress update:", e.data.message, "Percentage:", e.data.percentage);
+      } else if (type === "preview") {
         onPreview({ previewData });
         console.log("Preview data received:", previewData.length, "rows");
       } else if (type === "full") {
@@ -41,6 +46,9 @@ export const processFile = async (
           fileType: file.type,
           fileSize: file.size,
         });
+        console.log("Full data received:", fileData.length, "rows");
+        console.log(fileData.slice(0, 5)); // Log first 5 rows for debugging
+        onProgress({ message: "Файл обролено", percentage: 100 });
         worker.terminate();
         resolve();
       }
@@ -52,6 +60,6 @@ export const processFile = async (
     };
 
     // ✅ передаємо startFrom
-    worker.postMessage({ fileBuffer: buffer, fileName: file.name, startFrom, previewRows, startPreviewFrom});
+    worker.postMessage({ fileBuffer: buffer, fileName: file.name, startFrom, previewRows, startPreviewFrom });
   });
 };
