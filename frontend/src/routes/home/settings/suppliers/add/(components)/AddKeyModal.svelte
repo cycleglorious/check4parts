@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
 	import type { Snippet } from 'svelte';
-	import InputTextField from '$lib/components/forms/modal/InputTextField.svelte';
-	import InputPasswordField from '$lib/components/forms/modal/InputPasswordField.svelte';
+	import InputTextField from '$lib/components/inputs/modal/InputTextField.svelte';
+	import InputPasswordField from '$lib/components/inputs/modal/InputPasswordField.svelte';
 
 	interface FormStructureItem {
 		name: string;

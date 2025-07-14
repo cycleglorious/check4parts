@@ -2,8 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { Dialog } from 'bits-ui';
 	import type { ActionData } from '../$types';
-	import InputTextField from '$lib/components/forms/edit-modal/InputTextField.svelte';
-	import InputTextareaField from '$lib/components/forms/edit-modal/InputTextareaField.svelte';
+	import InputTextField from '$lib/components/inputs/edit-modal/InputTextField.svelte';
+	import InputTextareaField from '$lib/components/inputs/edit-modal/InputTextareaField.svelte';
 
 	interface Props {
 		openState: boolean;

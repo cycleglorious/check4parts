@@ -14,16 +14,16 @@ export const load: PageServerLoad = async ({ depends, locals: { supabase } }) =>
 
 export const actions = {
 	add: async ({ request, locals: { supabase } }) => {
-		const formData = await request.formData();
+		const form_data = await request.formData();
 
-		const first_name = formData.get('first_name')?.toString();
-		const last_name = formData.get('last_name')?.toString();
-		const middle_name = formData.get('middle_name')?.toString();
-		const phone_number = formData.get('phone')?.toString();
-		const email = formData.get('email')?.toString();
-		const role = formData.get('role')?.toString();
-		const trading_point = formData.get('trading_point')?.toString();
-		const password = formData.get('password')?.toString();
+		const first_name = form_data.get('first_name')?.toString();
+		const last_name = form_data.get('last_name')?.toString();
+		const middle_name = form_data.get('middle_name')?.toString();
+		const phone_number = form_data.get('phone')?.toString();
+		const email = form_data.get('email')?.toString();
+		const role = form_data.get('role')?.toString();
+		const trading_point = form_data.get('trading_point')?.toString();
+		const password = form_data.get('password')?.toString();
 
 		console.log(first_name, last_name, email, role, trading_point, password);
 

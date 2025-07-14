@@ -35,7 +35,7 @@
 				<tr
 					class="bg-primary-50 hover:bg-primary-100 border-5 border-white"
 					onclick={() => {
-						goto(`/home/parts/${cross.id}`);
+						goto(`/home/search/${cross.brand}/${cross.id}`);
 					}}
 				>
 					<td class="rounded-l-2xl p-2 text-center">

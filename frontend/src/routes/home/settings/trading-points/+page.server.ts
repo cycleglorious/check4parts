@@ -9,12 +9,12 @@ export const load: PageServerLoad = async ({ depends, locals: { supabase } }) =>
 
 export const actions: Actions = {
 	addTradingPoint: async ({ request, locals: { supabase } }) => {
-		const formData = await request.formData();
+		const form_data = await request.formData();
 
-		const name = formData.get('name');
-		const region = formData.get('region');
-		const locality = formData.get('locality');
-		const street = formData.get('street');
+		const name = form_data.get('name');
+		const region = form_data.get('region');
+		const locality = form_data.get('locality');
+		const street = form_data.get('street');
 
 		let { data, error } = await supabase.from('trading_points').select('*').eq('name', name);
 
@@ -28,7 +28,7 @@ export const actions: Actions = {
 			};
 		}
 
-		let { data: insertData, error: insertError } = await supabase
+		let { error: insertError } = await supabase
 			.from('trading_points')
 			.insert([{ name, region, locality, street }])
 			.select();
@@ -44,17 +44,15 @@ export const actions: Actions = {
 		}
 	},
 	editTradingPoint: async ({ request, locals: { supabase } }) => {
-		const formData = await request.formData();
+		const form_data = await request.formData();
 
-		const id = formData.get('id');
-		const name = formData.get('name');
-		const region = formData.get('region');
-		const locality = formData.get('locality');
-		const street = formData.get('street');
+		const id = form_data.get('id');
+		const name = form_data.get('name');
+		const region = form_data.get('region');
+		const locality = form_data.get('locality');
+		const street = form_data.get('street');
 
 		let { data, error } = await supabase.from('trading_points').select('*').eq('name', name);
-
-		console.log(data);
 
 		if (error) {
 			return { success: false, message: error.message };

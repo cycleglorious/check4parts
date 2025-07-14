@@ -2,7 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { Dialog } from 'bits-ui';
 	import { onMount } from 'svelte';
-	import type { ActionData } from './$types';
+	import type { ActionData } from '../$types';
 	import toast from 'svelte-french-toast';
 
 	interface Props {

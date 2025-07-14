@@ -1,8 +1,7 @@
 <script lang="ts">
-	import EditDeleteModel from '$lib/components/modals/EditDeleteModelInTable.svelte';
-	import toast from 'svelte-french-toast';
+	import EditDeleteModel from '$lib/components/modals/EditDeleteModalInTable.svelte';
 	import type { PageProps } from './$types';
-	import AddEditPointModal from './AddEditPointModal.svelte';
+	import AddEditPointModal from './(components)/AddEditPointModal.svelte';
 
 	let { data, form }: PageProps = $props();
 	let { points } = $derived(data);

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import NumberInput from '$lib/components/forms/table/NumberInput.svelte';
+	import NumberInput from '$lib/components/inputs/table/NumberInput.svelte';
 	import RestsRow from './RestsRow.svelte';
 
 	interface Props {

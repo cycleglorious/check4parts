@@ -1,5 +1,5 @@
 <script lang="ts">
-	import NumberInput from '$lib/components/forms/table/NumberInput.svelte';
+	import NumberInput from '$lib/components/inputs/table/NumberInput.svelte';
 
 	interface Props {
 		rest: {
@@ -19,12 +19,12 @@
 </script>
 
 <tr class="divide-primary-950 group hover:bg-primary-50 w-full divide-x-2">
-	<td class="">{rest.provider.name}</td>
-	<td class="">{rest.quantity}</td>
-	<td class="">{rest.delivery_time}</td>
-	<td class="">{rest.price}</td>
-	<td class=""><NumberInput bind:value /></td>
-	<td class="">
+	<td>{rest.provider.name}</td>
+	<td>{rest.quantity}</td>
+	<td>{rest.delivery_time}</td>
+	<td>{rest.price}</td>
+	<td><NumberInput bind:value /></td>
+	<td>
 		<button
 			type="button"
 			class="btn-icon preset-filled-primary-50-950"

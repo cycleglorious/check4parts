@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Menu from './(components)/Menu.svelte';
 	import { page } from '$app/state';
-	import SearchInput from '$lib/components/search-bar/SearchInput.svelte';
+	import SearchInput from '$lib/components/inputs/search-bar/SearchInput.svelte';
 	import { goto } from '$app/navigation';
 
 	let { data, children } = $props();

@@ -12,7 +12,6 @@ export const load: PageServerLoad = async ({ url, locals: { supabaseTecdoc: supa
 
   if (searchQuery) {
     partsPromise = (async () => {
-      // ... весь код пошуку з Supraase API залишається тим самим ...
       const { data: articlesData, error: articlesError } = await supabase
         .from('articles')
         .select(
@@ -54,10 +53,9 @@ export const load: PageServerLoad = async ({ url, locals: { supabaseTecdoc: supa
     partsPromise = Promise.resolve([]);
   }
 
-  console.log({ partsPromise }); // Буде виводити Promise, не дані одразу
 
   return {
     searchQuery,
-    parts: partsPromise // Передаємо Promise
+    parts: partsPromise
   };
 };

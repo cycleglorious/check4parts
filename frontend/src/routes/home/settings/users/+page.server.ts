@@ -11,8 +11,8 @@ export const load: PageServerLoad = async ({ depends, locals: { supabase } }) =>
 
 export const actions = {
 	delete: async ({ request, locals: { supabase } }) => {
-		const formData = await request.formData();
-		const id = formData.get('id');
+		const form_data = await request.formData();
+		const id = form_data.get('id');
 		const { error } = await supabase.from('staff').delete().eq('id', id);
 		if (error) {
 			return { success: false, message: error.message };

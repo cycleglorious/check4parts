@@ -31,9 +31,11 @@ export const actions = {
 		}
 	},
 	editState: async ({ request, locals: { supabase } }) => {
-		const formData = await request.formData();
-		const id = formData.get('id')?.toString();
-		const state = formData.get('state')?.toString();
+		const form_data = await request.formData();
+
+		const id = form_data.get('id')?.toString();
+		const state = form_data.get('state')?.toString();
+		
 		const { error } = await supabase.from('company_provider').update({ state }).eq('id', id);
 		if (error) {
 			return { success: false, message: error.message };

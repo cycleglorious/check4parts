@@ -1,15 +1,11 @@
 <script lang="ts">
-	import InputPasswordField from '$lib/components/forms/card/InputPasswordField.svelte';
-	import InputSelect from '$lib/components/forms/card/InputSelect.svelte';
-	import InputTextField from '$lib/components/forms/card/InputTextField.svelte';
+	import InputPasswordField from '$lib/components/inputs/card/InputPasswordField.svelte';
+	import InputSelect from '$lib/components/inputs/card/InputSelect.svelte';
+	import InputTextField from '$lib/components/inputs/card/InputTextField.svelte';
 	import toast from 'svelte-french-toast';
 
 	let { data, form } = $props();
 	let { user, roles, points } = $derived(data);
-
-	let password = $state('');
-	let repeat_password = $state('');
-	let repeat_password_invalid = $derived<boolean>(password !== repeat_password);
 
 	$effect(() => {
 		if (form) {
@@ -100,15 +96,14 @@
 						name="password"
 						placeholder="Введіть пароль"
 						disabled
-						bind:value={password}
+						value={""}
 					/>
 					<InputPasswordField
 						lable="Повторіть пароль"
 						name="repeat_password"
 						placeholder="Повторіть пароль"
+						value={""}
 						disabled
-						{repeat_password_invalid}
-						bind:value={repeat_password}
 					/>
 				</div>
 			</div>

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Tooltip } from 'bits-ui';
-	import type { Component, Snippet } from 'svelte';
+	import type { Snippet } from 'svelte';
 	import ConfirmDeleteModal from './ConfirmDeleteModal.svelte';
 
 	interface Props {

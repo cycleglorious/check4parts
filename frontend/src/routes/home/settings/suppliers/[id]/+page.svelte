@@ -53,8 +53,8 @@
 			<button
 				class="btn preset-outlined-surface-700-300 w-40"
 				onclick={() => {
-					selectedState = supplier.state; // Reset state
-					editPage = false; // Exit edit mode
+					selectedState = supplier.state;
+					editPage = false;
 				}}
 			>
 				Скасувати

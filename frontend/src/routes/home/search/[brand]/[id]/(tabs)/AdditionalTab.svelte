@@ -24,9 +24,9 @@
 			<tbody class="!divide-primary-950 !divide-y-2">
 				{#each additional as addon}
 					<tr class="divide-primary-950 group hover:bg-primary-50 w-full divide-x-2">
-						<td class="">{addon.code}</td>
-						<td class="">{addon.min_quantity}</td>
-						<td class="">{addon.name}</td>
+						<td  >{addon.code}</td>
+						<td  >{addon.min_quantity}</td>
+						<td  >{addon.name}</td>
 					</tr>
 				{/each}
 			</tbody>
