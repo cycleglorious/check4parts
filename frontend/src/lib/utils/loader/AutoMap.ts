@@ -25,7 +25,7 @@ export const IMPORTANT_HEADERS = [
     value: "description",
     type: "prop",
     header: "",
-    aliases: ["опис", "опис товару", "description", "назва", "назва товару"]
+    aliases: ["опис", "опис товару", "description", "назва", "назва товару", "name"]
   }
 ];
 
@@ -40,12 +40,12 @@ export function autoMapHeaders(
   const matchImportant = (target: string, aliases: string[] = []) => {
     const candidates = [target, ...aliases].map(normalize);
     const idx = headers.findIndex(h => candidates.includes(normalize(h)));
-    return idx !== -1 ? idx : "";
+    return idx !== -1 ? idx.toString() : "";
   };
 
   const match = (target: string) => {
     const idx = headers.findIndex(h => normalize(h).includes(normalize(target)));
-    return idx !== -1 ? idx : "";
+    return idx !== -1 ? idx.toString() : "";
   };
 
   return [

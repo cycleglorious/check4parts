@@ -18,9 +18,7 @@ export const processFile = async (
 ) => {
   if (!files?.[0]) return;
   const file = files[0];
-  const buffer = await file.arrayBuffer();
 
-  console.log("Processing file:", file.name, "Start from:", startFrom, "Preview rows:", previewRows, "Start preview from:", startPreviewFrom);
 
   return new Promise<void>((resolve, reject) => {
     const worker = new Worker();
@@ -60,6 +58,6 @@ export const processFile = async (
     };
 
     // ✅ передаємо startFrom
-    worker.postMessage({ fileBuffer: buffer, fileName: file.name, startFrom, previewRows, startPreviewFrom });
+    worker.postMessage({ file: file, fileName: file.name, startFrom, previewRows, startPreviewFrom });
   });
 };

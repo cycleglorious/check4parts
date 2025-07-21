@@ -41,6 +41,7 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
+		"@fast-csv/parse": "^5.0.2",
 		"@supabase/ssr": "^0.5.2",
 		"@supabase/supabase-js": "^2.49.1",
 		"@types/jsonwebtoken": "^9.0.10",

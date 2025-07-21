@@ -12,15 +12,15 @@ self.onmessage = async (event) => {
 
   // --- Input Validation ---
   if (!Number.isInteger(startFrom) || startFrom < 0) {
-    self.postMessage({ error: "Невірний параметр startFrom: має бути невід'ємним цілим числом." });
+    self.postMessage({ type: "error", error: "Невірний параметр startFrom: має бути невід'ємним цілим числом." });
     return;
   }
   if (!Number.isInteger(previewRowsCount) || previewRowsCount < 0) {
-    self.postMessage({ error: "Невірний параметр previewRowsCount: має бути невід'ємним цілим числом." });
+    self.postMessage({ type: "error", error: "Невірний параметр previewRowsCount: має бути невід'ємним цілим числом." });
     return;
   }
   if (!Number.isInteger(startPreviewFrom) || startPreviewFrom < 0) {
-    self.postMessage({ error: "Невірний параметр startPreviewFrom: має бути невід'ємним цілим числом." });
+    self.postMessage({ type: "error", error: "Невірний параметр startPreviewFrom: має бути невід'ємним цілим числом." });
     return;
   }
 
@@ -28,7 +28,7 @@ self.onmessage = async (event) => {
     self.postMessage({ type: "progress", message: "Початок обробки файлу...", percentage: 5 });
 
     let workbook: XLSX.WorkBook;
-    let json: any[][]; // Will store data processed by XLSX.js with header: 1
+    let json: any[][];
 
     // --- File Type Detection and Parsing ---
     if (fileName.toLowerCase().endsWith('.csv') || fileName.toLowerCase().endsWith('.txt')) {
@@ -61,7 +61,7 @@ self.onmessage = async (event) => {
 
     // --- Sheet Selection and Data Extraction ---
     if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-      self.postMessage({ error: "Робоча книга не містить аркушів." });
+      self.postMessage({ type: "error", error: "Робоча книга не містить аркушів." });
       return;
     }
 
@@ -69,24 +69,19 @@ self.onmessage = async (event) => {
     const sheet = workbook.Sheets[sheetName];
 
     if (!sheet) {
-      self.postMessage({ error: `Аркуш '${sheetName}' не знайдено або порожній.` });
+      self.postMessage({ type: "error", error: `Аркуш '${sheetName}' не знайдено або порожній.` });
       return;
     }
 
-    self.postMessage({ type: "progress", message: "Конвертація даних аркуша в JSON...", percentage: 50 });
-    // Reverted to header: 1, so XLSX.js uses the first row as headers and returns data from the second row.
-    // The 'json' array will contain data rows, with the first row of the original sheet implicitly used as headers.
+    self.postMessage({ type: "progress", message: "Конвертація даних...", percentage: 50 });
     json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
     if (json.length === 0) {
-      self.postMessage({ error: "Файл не містить даних." });
+      self.postMessage({ type: "error", error: "Файл не містить даних." });
       return;
     }
 
-    // Headers are now derived as numeric indices, as per the original request.
-    // This assumes the frontend will map these numeric headers to actual column names.
     const headers = json[0].map((_, idx) => idx.toString());
-
     console.log("Headers detected:", headers);
 
     // --- Reusable function to map a row array to an object with numeric headers ---
@@ -101,25 +96,19 @@ self.onmessage = async (event) => {
     // --- Preview Data ---
     self.postMessage({ type: "progress", message: "Генерація попереднього перегляду...", percentage: 70 });
 
-    // Slice from json directly, which already has the first row (headers) removed by header: 1
     const previewRows = json.slice(startPreviewFrom, previewRowsCount + startPreviewFrom);
     const previewData = previewRows.map(mapRowToObj);
 
-    // Send the numeric headers along with the preview data
-    self.postMessage({ type: "preview", previewData, headers });
+    self.postMessage({ type: "preview", previewData, metadata: { headers, rowCount: previewRows.length } });
 
-    // --- Full Data (Single Transfer) ---
     self.postMessage({ type: "progress", message: "Підготовка повних даних...", percentage: 80 });
 
-    // Slice from json directly, which already has the first row (headers) removed by header: 1
     const fileData = json.slice(startFrom).map(mapRowToObj);
-
     self.postMessage({ type: "full", fileData });
-
     self.postMessage({ type: "progress", message: "Обробка файлу завершена.", percentage: 100 });
 
   } catch (err: any) {
     console.error("Помилка в Web Worker:", err);
-    self.postMessage({ error: `Помилка при обробці файлу: ${err.message || "Невідома помилка"}` });
+    self.postMessage({ type: "error", error: `Помилка при обробці файлу: ${err.message || "Невідома помилка"}` });
   }
 };

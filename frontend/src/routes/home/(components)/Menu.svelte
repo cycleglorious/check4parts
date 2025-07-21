@@ -60,7 +60,7 @@
 			{@render menuItem('prices', 'Прайси')}
 			{@render subMenu('prices', undefined, [
 				{ page: '', title: 'Історія' },
-				{ page: 'loader', title: 'Завантажити прайси' },
+				{ page: 'loader-v2', title: 'Завантажити прайси' },
 				{ page: 'search', title: 'Пошук' }
 			])}
 		</li>
