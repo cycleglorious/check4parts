@@ -45,10 +45,6 @@
 <div class="flex flex-col gap-2">
 	<ul>
 		<li>
-			{@render menuItem('staff', 'Співробітники')}
-			{@render subMenu('staff', undefined, [{ page: '', title: 'Співробітники' }])}
-		</li>
-		<li>
 			{@render menuItem('settings', 'Налаштування')}
 			{@render subMenu('settings', undefined, [
 				{ page: 'trading-points', title: 'Торгівельні точки' },
@@ -60,7 +56,7 @@
 			{@render menuItem('prices', 'Прайси')}
 			{@render subMenu('prices', undefined, [
 				{ page: '', title: 'Історія' },
-				{ page: 'loader-v2', title: 'Завантажити прайси' },
+				{ page: 'loader', title: 'Завантажити прайси' },
 				{ page: 'search', title: 'Пошук' }
 			])}
 		</li>

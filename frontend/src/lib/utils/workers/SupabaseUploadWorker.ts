@@ -1,26 +1,8 @@
 // src/lib/utils/supabaseUploadWorker.ts
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { TransformedItem } from '../loader/TransformFileData';
-import type { AppSettings } from '../loader/SupabaseUpload';
+import type { AppSettings, PriceRowForDB, WorkerMessage } from '../loader/SupabaseUpload';
+import type { TransformedItem } from '../loader/TransformFile.svelte';
 
-// Define the messages the worker can receive and send back
-export type WorkerMessage =
-  | { type: 'startUpload'; data: { data: TransformedItem[]; providerId: string; settings: AppSettings; authToken: string; hash: string; supabaseAnonKey: string; supabaseUrl: string }; }
-  | { type: 'progress'; payload: { uploadedCount: number; totalCount: number; percentage: number; message: string }; }
-  | { type: 'complete'; payload: { totalCount: number; }; }
-  | { type: 'error'; payload: { message: string; uploadedCount?: number; totalCount?: number; percentage?: number; }; };
-
-
-// This type should ideally be defined in a shared types file, e.g., src/lib/types/data.ts
-export type PriceRowForDB = {
-  brand: string;
-  article: string;
-  price: number | null;
-  description: string | null;
-  provider_id: string;
-  rests: any;
-  history_id: string;
-};
 
 // Function to send messages back to the main thread
 function postMessageToMain(message: WorkerMessage) {

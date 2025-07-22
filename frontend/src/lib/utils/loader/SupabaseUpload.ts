@@ -1,6 +1,6 @@
 // src/lib/utils/supabaseUploadManager.ts
 import Worker from '$lib/utils/workers/SupabaseUploadWorker.ts?worker';
-import type { TransformedItem } from '../workers/TransfromFileWorker';
+import type { TransformedItem } from './TransformFile.svelte';
 
 
 export type AppSettings = {
@@ -9,12 +9,24 @@ export type AppSettings = {
   concurrencyLimit: number;
 };
 
-// Define the messages that can be sent to and received from the worker
 export type WorkerMessage =
-  | { type: 'startUpload'; data: { data: TransformedItem[]; providerId: string; settings: AppSettings; supabaseUrl: string; supabaseAnonKey: string; }; }
+  | { type: 'startUpload'; data: { data: TransformedItem[]; providerId: string; settings: AppSettings; authToken: string; hash: string; supabaseAnonKey: string; supabaseUrl: string }; }
   | { type: 'progress'; payload: { uploadedCount: number; totalCount: number; percentage: number; message: string }; }
-  | { type: 'complete'; }
-  | { type: 'error'; payload: { message: string }; };
+  | { type: 'complete'; payload: { totalCount: number; }; }
+  | { type: 'error'; payload: { message: string; uploadedCount?: number; totalCount?: number; percentage?: number; }; };
+
+
+export type PriceRowForDB = {
+  brand: string;
+  article: string;
+  price: number | null;
+  description: string | null;
+  provider_id: string;
+  rests: any;
+  history_id: string;
+};
+
+
 
 let uploadWorker: Worker | null = null;
 let currentOnProgress: ((progress: { uploadedCount: number; totalCount: number; percentage: number; message: string }) => void) | undefined;
