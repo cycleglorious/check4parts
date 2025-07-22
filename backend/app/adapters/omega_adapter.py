@@ -1022,6 +1022,58 @@ class OmegaAdapter:
             "POST", "/public/api/v1.0/product/getBrands", json_data=json_data
         )
 
+    async def get_lamps(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        json_data = filters or {}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/searchcatalog/getLamps", json_data=json_data
+        )
+
+    async def get_lamps_filters(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/searchcatalog/getLampsFilters"
+        )
+
+    async def get_road_map(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        json_data = filters or {}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/searchcatalog/getRoadMap", json_data=json_data
+        )
+
+    async def get_bearings(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        json_data = filters or {}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/searchcatalog/getBearings", json_data=json_data
+        )
+
+    async def get_accessories(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        json_data = filters or {}
+        return await self._make_request(
+            "POST", "/public/api/v1.0/searchcatalog/getAccessories", json_data=json_data
+        )
+
+    async def get_accessories_filters(self) -> Dict[str, Any]:
+        return await self._make_request(
+            "POST", "/public/api/v1.0/searchcatalog/getAccessoriesFilters"
+        )
+
+    async def get_garage_equipment(
+        self, filters: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        json_data = filters or {}
+        return await self._make_request(
+            "POST",
+            "/public/api/v1.0/searchcatalog/getGarageEquipment",
+            json_data=json_data,
+        )
+
     async def close(self) -> None:
         if self._client:
             await self._client.aclose()
