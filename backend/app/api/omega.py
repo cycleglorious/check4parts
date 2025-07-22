@@ -313,6 +313,10 @@ class BrandsRequest(BaseModel):
     rest: int = Field(0, ge=0, description="Rest filter")
 
 
+class FiltersRequest(BaseModel):
+    filters: Optional[Dict[str, Any]] = Field(None, description="Optional filters")
+
+
 async def handle_api_errors(func, *args, **kwargs):
     try:
         return await func(*args, **kwargs)
@@ -1005,3 +1009,45 @@ async def get_brands(request: BrandsRequest) -> Dict[str, Any]:
         return await handle_api_errors(
             adapter.get_brands, request.page_index, request.page_size, request.rest
         )
+
+
+@router.post("/searchcatalog/lamps")
+async def get_lamps(request: FiltersRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_lamps, request.filters)
+
+
+@router.post("/searchcatalog/lamps-filters")
+async def get_lamps_filters():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_lamps_filters)
+
+
+@router.post("/searchcatalog/road-map")
+async def get_road_map(request: FiltersRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_road_map, request.filters)
+
+
+@router.post("/searchcatalog/bearings")
+async def get_bearings(request: FiltersRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_bearings, request.filters)
+
+
+@router.post("/searchcatalog/accessories")
+async def get_accessories(request: FiltersRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_accessories, request.filters)
+
+
+@router.post("/searchcatalog/accessories-filters")
+async def get_accessories_filters():
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_accessories_filters)
+
+
+@router.post("/searchcatalog/garage-equipment")
+async def get_garage_equipment(request: FiltersRequest):
+    async with OmegaAdapter() as adapter:
+        return await handle_api_errors(adapter.get_garage_equipment, request.filters)
