@@ -68,29 +68,36 @@ const authGuard: Handle = async ({ event, resolve }) => {
 	event.locals.session = session;
 	event.locals.user = user;
 
-	event.locals.supabasePrices = createClient(
+	event.locals.supabasePrices = createServerClient(
 		PUBLIC_SUPABASE_PRICES_URL,
 		PUBLIC_SUPABASE_PRICES_ANON_KEY,
 		{
 			global: {
 				headers: {
-					Authorization: `Bearer ${session?.access_token}`
+					Authorization: `Bearer ${event.locals.session?.access_token}`
 				}
+			},
+			cookies: {
+				getAll: () => event.cookies.getAll(),
 			}
 		}
 	);
 
-	event.locals.supabaseTecdoc = createClient(
+	event.locals.supabaseTecdoc = createServerClient(
 		PUBLIC_SUPABASE_TECDOC_URL,
 		PUBLIC_SUPABASE_TECDOC_ANON_KEY,
 		{
 			global: {
 				headers: {
-					Authorization: `Bearer ${session?.access_token}`
+					Authorization: `Bearer ${event.locals.session?.access_token}`
 				}
+			},
+			cookies: {
+				getAll: () => event.cookies.getAll(),
 			}
 		}
-	)
+	);
+
 
 
 	if (!event.locals.session && event.url.pathname.startsWith('/home')) {

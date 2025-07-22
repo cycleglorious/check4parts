@@ -1,7 +1,6 @@
 // src/lib/utils/supabaseUploadManager.ts
-import type { TransformedItem } from "./TransformFileData";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import Worker from '$lib/utils/workers/SupabaseUploadWorker.ts?worker';
+import type { TransformedItem } from '../workers/TransfromFileWorker';
 
 
 export type AppSettings = {
@@ -23,9 +22,12 @@ let currentReject: ((reason?: any) => void) | undefined;
 
 export async function startWorkerUpload(
   data: TransformedItem[],
+  hash: string,
   providerId: string,
   settings: AppSettings,
   authToken: string,
+  supabaseUrl: string,
+  supabaseAnonKey: string,
   onProgress?: (progress: { uploadedCount: number; totalCount: number; percentage: number; message: string }) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -82,8 +84,11 @@ export async function startWorkerUpload(
       data: {
         data: data,
         providerId,
-        settings: JSON.parse(JSON.stringify(settings)),
-        authToken
+        settings: settings,
+        authToken,
+        supabaseUrl,
+        supabaseAnonKey,
+        hash
       },
     });
   });

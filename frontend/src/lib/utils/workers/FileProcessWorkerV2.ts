@@ -46,7 +46,7 @@ self.onmessage = async (event) => {
         }
       }
 
-      self.postMessage({ type: "progress", message: `Визначено розділювач: '${bestDelim}', читання файлу...`, percentage: 20 });
+      self.postMessage({ type: "progress", message: `Читання файлу...`, percentage: 20 });
 
       workbook = XLSX.read(csvString, {
         type: 'string',

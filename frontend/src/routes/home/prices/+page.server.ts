@@ -14,6 +14,8 @@ export const load: PageServerLoad = async ({ locals: { supabasePrices, supabase 
     .order("status", { ascending: false })
     .order("created_at", { ascending: false })
 
+  console.log({ price_history, error });
+
   const staffMap = new Map(staff!.map(employee => [employee.user_id, employee]));
 
   // Об'єднуємо дані

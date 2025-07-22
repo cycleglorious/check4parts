@@ -1,7 +1,7 @@
 import { fail } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = async ({ locals: { supabasePrices: supabase, session } }) => {
+export const load: PageServerLoad = async ({ locals: { supabasePrices: supabase } }) => {
   const [providersResponse, warehousesResponse] = await Promise.all([
     supabase.from("providers").select("*").order("name"),
     supabase.from("warehouses").select("*").order("name"),

@@ -2,11 +2,10 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { TransformedItem } from '../loader/TransformFileData';
 import type { AppSettings } from '../loader/SupabaseUpload';
-import { PUBLIC_SUPABASE_PRICES_ANON_KEY, PUBLIC_SUPABASE_PRICES_URL } from '$env/static/public';
 
 // Define the messages the worker can receive and send back
 export type WorkerMessage =
-  | { type: 'startUpload'; data: { data: TransformedItem[]; providerId: string; settings: AppSettings; authToken: string }; }
+  | { type: 'startUpload'; data: { data: TransformedItem[]; providerId: string; settings: AppSettings; authToken: string; hash: string; supabaseAnonKey: string; supabaseUrl: string }; }
   | { type: 'progress'; payload: { uploadedCount: number; totalCount: number; percentage: number; message: string }; }
   | { type: 'complete'; payload: { totalCount: number; }; }
   | { type: 'error'; payload: { message: string; uploadedCount?: number; totalCount?: number; percentage?: number; }; };
@@ -31,6 +30,7 @@ function postMessageToMain(message: WorkerMessage) {
 // The core upload logic, now inside the worker
 async function uploadPricesToSupabaseInWorker(
   data: TransformedItem[],
+  hash: string,
   providerId: string,
   settings: AppSettings,
   supabase: SupabaseClient,
@@ -43,12 +43,29 @@ async function uploadPricesToSupabaseInWorker(
   let historyCreatedAt: string | null = null;
 
   try {
+    postMessageToMain({ type: 'progress', payload: { uploadedCount: 0, totalCount, percentage: 0, message: 'Початок завантаження...' } });
+    const { count: isHashExists, error: hashCheckError } = await supabase
+      .from('price_history')
+      .select('id', { count: 'exact' })
+      .eq('hash', hash)
+      .eq('provider_id', providerId)
+      .eq('status', 'actual')
+
+    if (hashCheckError) {
+      throw new Error(`Помилка перевірки історії цін: ${hashCheckError.message}, ${JSON.stringify(hashCheckError)}, ${providerId}`);
+    }
+    if (isHashExists! > 0) {
+      postMessageToMain({ type: 'error', payload: { message: `Дані з таким хешем вже існують для цього постачальника.` } });
+      return;
+    }
+
     postMessageToMain({ type: 'progress', payload: { uploadedCount: 0, totalCount, percentage: 0, message: 'Створення запису історії завантаження...' } });
     const { data: historyData, error: historyError } = await supabase
       .from('price_history')
       .insert({
         provider_id: providerId,
         status: 'uploading',
+        hash: hash,
       })
       .select('id, created_at')
       .single();
@@ -60,63 +77,6 @@ async function uploadPricesToSupabaseInWorker(
     historyCreatedAt = historyData.created_at;
 
     postMessageToMain({ type: 'progress', payload: { uploadedCount: 0, totalCount, percentage: 5, message: 'Початок завантаження даних...' } });
-
-    const chunkPromises: Promise<void>[] = [];
-    let nextChunkIndex = 0;
-
-    const processNextChunk = async (): Promise<void> => {
-      // Use a loop to keep scheduling as long as there are chunks and slots
-      while (nextChunkIndex < totalCount) {
-        const startIndex = nextChunkIndex;
-        const endIndex = Math.min(startIndex + chunkSize, totalCount);
-        const chunk = data.slice(startIndex, endIndex);
-        nextChunkIndex = endIndex; // Move the global index forward
-
-        if (chunk.length === 0) {
-          break; // No more data to process in this loop iteration
-        }
-
-        const rowsToInsert: PriceRowForDB[] = chunk.map(item => ({
-          brand: item.brand,
-          article: item.article,
-          price: item.price,
-          description: item.description === '' ? null : item.description,
-          provider_id: providerId,
-          rests: item.rests,
-          history_id: historyId!,
-        }));
-
-        try {
-          const { error } = await supabase.from('prices').insert(rowsToInsert);
-
-          if (error) {
-            throw new Error(`Помилка завантаження даних (пакет ${Math.floor(startIndex / chunkSize) + 1}): ${error.message}`);
-          }
-
-          // Update uploadedCount and progress only after successful insertion
-          uploadedCount += chunk.length;
-          const percentage = Math.min(95, (uploadedCount / totalCount) * 90 + 5);
-
-          postMessageToMain({
-            type: 'progress',
-            payload: {
-              uploadedCount,
-              totalCount,
-              percentage,
-              message: `Завантаження... ${uploadedCount} з ${totalCount} записів.`,
-            },
-          });
-
-        } catch (e: any) {
-          console.error('Error during chunk upload:', e);
-          // If an error occurs, update history status to 'failed' and re-throw
-          if (historyId) {
-            await supabase.from('price_history').update({ status: 'failed' }).eq('id', historyId);
-          }
-          throw e; // Propagate the error
-        }
-      }
-    };
 
     // Create an array of promises, limiting concurrency
     const allChunkPromises: Promise<void>[] = [];
@@ -138,7 +98,11 @@ async function uploadPricesToSupabaseInWorker(
             try {
               const { error } = await supabase.from('prices').insert(rowsToInsert);
               if (error) {
-                throw new Error(`Помилка завантаження даних (пакет ${Math.floor(currentChunkIndex / chunkSize) + 1}): ${error.message}`);
+                const { error: updateError } = await supabase.from('price_history').update({ status: 'failed' }).eq('id', historyId);
+                if (updateError) {
+                  console.warn(`Помилка оновлення статусу історії цін (${historyId}): ${updateError.message}`);
+                }
+                throw new Error(`Помилка завантаження даних (пакет ${Math.floor(currentChunkIndex / chunkSize) + 1}): ${JSON.stringify(error)}`);
               }
               // Atomically update uploadedCount and send progress
               uploadedCount += currentChunk.length;
@@ -222,13 +186,14 @@ async function uploadPricesToSupabaseInWorker(
 // Listen for messages from the main thread
 self.onmessage = (event: MessageEvent<WorkerMessage>) => {
   if (event.data.type === 'startUpload') {
-    const { data, providerId, settings, authToken } = event.data.data;
+    const { data, providerId, settings, authToken, hash } = event.data.data;
+    console.log(event.data.data);
 
     // Initialize Supabase client within the worker context
 
-    uploadPricesToSupabaseInWorker(data, providerId, settings, createClient(
-      PUBLIC_SUPABASE_PRICES_URL,
-      PUBLIC_SUPABASE_PRICES_ANON_KEY,
+    uploadPricesToSupabaseInWorker(data, hash, providerId, settings, createClient(
+      event.data.data.supabaseUrl,
+      event.data.data.supabaseAnonKey,
       {
         global: {
           headers: {

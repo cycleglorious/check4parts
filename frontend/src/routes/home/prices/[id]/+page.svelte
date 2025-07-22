@@ -69,7 +69,7 @@
   </div>
 </div>
 
-{#if price_history.status === "actual"}
+{#if price_history.status !== "deleted"}
 <div class="border-primary-950 overflow-hidden rounded-xl border-2 mt-5">
   <div class="max-h-[60vh] overflow-y-auto">
     <table class="table min-w-full border-collapse">

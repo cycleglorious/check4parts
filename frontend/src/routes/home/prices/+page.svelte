@@ -12,7 +12,7 @@
           <th>Дата створення</th>
           <th>Користувач</th>
           <th>Постачальник</th>
-          <th>Chunk ID</th>
+          <th>Хеш</th>
           <th>Статус</th>
         </tr>
       </thead>
@@ -43,7 +43,7 @@
             <td class="p-2">{entry.user.first_name || '—'}</td>
             <td class="p-2">{entry.providers?.name || '—'}</td>
     
-            <td class="p-2">{entry.chunk_id || '—'}</td>
+            <td class="p-2">{(entry.hash || '—').slice(0, 8)}</td>
             <td class="p-2">
               {#if entry.status === 'uploading'}
                 <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">

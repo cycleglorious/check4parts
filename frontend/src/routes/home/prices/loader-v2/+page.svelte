@@ -1,16 +1,21 @@
 <script lang="ts">
+	import { PUBLIC_SUPABASE_PRICES_ANON_KEY, PUBLIC_SUPABASE_PRICES_URL } from '$env/static/public';
 	import InputSelect from '$lib/components/inputs/modal/InputSelect.svelte';
 	import { autoMapHeaders } from '$lib/utils/loader/AutoMap';
+	import { parseJwt } from '$lib/utils/loader/ParseJWT.js';
 	import { processFile } from '$lib/utils/loader/PreviewFile.js';
-	import { startWorkerUpload, terminateWorkerUpload, type AppSettings } from '$lib/utils/loader/SupabaseUpload.js';
 	import {
-		transformFileData,
-		type MappedHeader,
-		type TransformedItem
-	} from '$lib/utils/loader/TransformFileData.js';
+		startWorkerUpload,
+		terminateWorkerUpload,
+		type AppSettings
+	} from '$lib/utils/loader/SupabaseUpload.js';
+	import { StartTransformFileWorker } from '$lib/utils/loader/TransformFile.svelte.js';
+	import type { TransformedItem, MappedHeader } from '$lib/utils/workers/TransfromFileWorker.js';
 
 	let { data } = $props();
 	let { providers, warehouses } = $derived(data);
+
+	let company_id = $derived<string>(parseJwt(data.session?.access_token || '')?.company_id || '');
 
 	let selected_provider = $state<string>('');
 	let files: FileList | null = $state(null);
@@ -26,13 +31,15 @@
 	let settings: AppSettings = $state<AppSettings>({
 		startFrom: 2,
 		chunkSize: 5000,
-		concurrencyLimit: 7 // Default concurrency limit for parallel uploads
+		concurrencyLimit: 7
 	});
-	let settingsCollapsed = $state(false);
+	let settingsCollapsed = $state(true);
 
 	let previewData: any[] = $state([]);
-	let fullFileData: TransformedItem[] = $state([]);
+	let fullFileData: any[] = $state.raw([]);
+	let transformedData: TransformedItem[] = $state.raw([]);
 	let fileTransformed = $state(false);
+	let hashFullTransformedData = $state('');
 	let processingMessage = $state('');
 	let processingPercentage = $state(0);
 	let errorMessage = $state('');
@@ -45,12 +52,30 @@
 		warehouses.filter((warehouse) => warehouse.provider_id === selected_provider)
 	);
 
+	// Нова змінна стану для зберігання промісу перевірки хешу
+	let hashCheckPromise: Promise<any[]> | null = $state(null);
+
 	$effect(() => {
 		mappedHeaders = autoMapHeaders(firstRowHeaders, currentProviderWarehouses);
 	});
 
 	function toggleSettingsCollapse() {
 		settingsCollapsed = !settingsCollapsed;
+	}
+
+	async function checkHashExists(hash: string) {
+		const { data: hashCheckData, error: hashCheckError } = await data.supabasePrices
+			.from('price_history')
+			.select('id', { count: 'exact' })
+			.eq('hash', hash)
+			.eq('provider_id', selected_provider)
+			.eq('status', 'actual');
+
+		if (hashCheckError) {
+			throw new Error(`Помилка перевірки історії цін: ${hashCheckError.message}`);
+		}
+		console.log('Hash Check Data:', hashCheckData);
+		return hashCheckData;
 	}
 
 	async function handleFileUpload(event: Event) {
@@ -77,7 +102,6 @@
 				firstRowHeaders = Object.values(data[0]);
 			},
 			onFull: ({ fileData: data }) => {
-				console.log('Full File Data (raw):', data);
 				fullFileData = data;
 				fileLoading = false;
 				processingMessage = 'Обробка файлу завершена. Будь ласка, зіставте колонки.';
@@ -106,16 +130,30 @@
 		processingPercentage = 0;
 
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 500));
-			const transformed = await transformFileData(fullFileData, mappedHeaders, selected_provider);
-			fullFileData = transformed;
-			console.log(
-				'Transformed Data:',
-				fullFileData.slice(0, 5),
-				`Total: ${fullFileData.length} items`
+			// Викликаємо функцію StartTransformFileWorker, глибоко клонуючи fullFileData, щоб уникнути DataCloneError
+			const result = await StartTransformFileWorker(
+				fullFileData, // Глибоке клонування даних
+				$state.snapshot(mappedHeaders), // Глибоке клонування mappedHeaders,
+				selected_provider,
+				company_id,
+				data.session?.access_token || '', // Передаємо authToken
+				({ state }) => {
+					if (state === 'transforming') {
+						processingMessage = 'Трансформація даних...';
+					} else if (state === 'hash') {
+						processingMessage = 'Обрахування хешу...';
+					}
+					processingPercentage += 50; // Збільшуємо відсоток для візуалізації прогресу
+				}
 			);
+
+			transformedData = result.transformedData;
+			hashFullTransformedData = result.hash;
+
 			processingMessage = 'Дані успішно трансформовані! Тепер можете завантажити їх в базу даних.';
 			fileTransformed = true;
+			// Запускаємо початкову перевірку хешу після трансформації
+			hashCheckPromise = checkHashExists(hashFullTransformedData);
 		} catch (error: any) {
 			console.error('Error during data transformation:', error);
 			errorMessage = `Помилка трансформації даних: ${error.message || 'Невідома помилка'}`;
@@ -128,7 +166,7 @@
 
 	async function handleUploadToDatabase() {
 		uploadingToDB = true;
-		
+
 		if (!selected_provider) {
 			errorMessage = 'Будь ласка, оберіть провайдера перед завантаженням в базу даних.';
 			return;
@@ -141,10 +179,13 @@
 		try {
 			uploadedToDB = false;
 			await startWorkerUpload(
-				JSON.parse(JSON.stringify(fullFileData)),
+				$state.snapshot(transformedData),
+				$state.snapshot(hashFullTransformedData),
 				selected_provider,
-				settings,
-				data.session?.access_token || "",
+				$state.snapshot(settings),
+				data.session?.access_token || '',
+				PUBLIC_SUPABASE_PRICES_URL,
+				PUBLIC_SUPABASE_PRICES_ANON_KEY,
 				({
 					uploadedCount,
 					totalCount,
@@ -166,7 +207,8 @@
 			);
 			uploadDBMessage = 'Дані успішно завантажено в базу даних!';
 			uploadedToDB = true;
-			// Reset forms/data if upload is complete and successful
+			// Повторно запускаємо перевірку хешу після успішного завантаження
+			hashCheckPromise = checkHashExists(hashFullTransformedData);
 		} catch (error: any) {
 			console.error('Error uploading to database:', error);
 			errorMessage = `Помилка завантаження до бази даних: ${error.message || 'Невідома помилка'}`;
@@ -198,6 +240,8 @@
 		uploadingToDB = false;
 		uploadDBMessage = '';
 		uploadDBPercentage = 0;
+		uploadedToDB = false; // Скидаємо цей стан також
+		hashCheckPromise = null; // Скидаємо проміс перевірки хешу
 		terminateWorkerUpload();
 	}
 
@@ -347,7 +391,89 @@
 		</div>
 	{/if}
 
-	{#if previewData.length > 0 && !fileTransformed}
+	{#if previewData.length > 0}
+		<div class="mt-4">
+			<div>
+				<div class="flex gap-4">
+					<div class="badge preset-filled-primary-50-950 text-md">
+						<i class="fas fa-file"></i> Розмір: {files ? (files[0].size / 1024).toFixed(2) : '0.00'}
+						KB
+					</div>
+					<div class="badge preset-filled-primary-50-950 text-md">
+						<i class="fas fa-list"></i> Рядків: {fullFileData.length}
+					</div>
+					<div class="badge preset-filled-primary-50-950 text-md">
+						<i class="fas fa-calendar"></i> Дата: {files
+							? new Date(files[0].lastModified).toLocaleDateString('uk')
+							: 'N/A'}
+					</div>
+					{#if fileTransformed}
+						<div class="badge preset-filled-primary-50-950 text-md">
+							<i class="fas fa-fingerprint"></i> Хеш: {hashFullTransformedData.slice(0, 8)}
+						</div>
+						{#if hashCheckPromise}
+							{#await hashCheckPromise then hashExists}
+								{#if hashExists.length === 0}
+									<div class="badge preset-filled-success-50-950 text-md">
+										<i class="fas fa-check"></i> Хеш не існує
+									</div>
+								{:else}
+									<a
+										href="/home/prices/{hashExists[0].id}"
+										target="_blank"
+										class="badge preset-filled-error-50-950"
+									>
+										<i class="fas fa-times"></i> Хеш існує
+									</a>
+								{/if}
+								<div class="text-center">
+									<button
+										class="btn preset-filled-primary-950-50"
+										onclick={handleUploadToDatabase}
+										disabled={uploadingToDB || !selected_provider || hashExists.length > 0}
+										aria-busy={uploadingToDB}
+									>
+										{#if uploadingToDB}
+											Завантаження в БД...
+										{:else}
+											{hashExists.length > 0
+												? 'Хеш існує, не можна завантажити'
+												: 'Завантажити в БД'}
+										{/if}
+									</button>
+								</div>
+							{:catch error}
+								<div class="badge preset-filled-primary-50-950 text-md">
+									<i class="fas fa-exclamation-triangle"></i> Помилка перевірки хешу: {error.message}
+								</div>
+							{/await}
+						{/if}
+					{/if}
+				</div>
+			</div>
+		</div>
+
+		{#if uploadingToDB}
+			<div class="mt-4">
+				<p class="text-sm text-gray-700">{uploadDBMessage}</p>
+				<div class="mt-2 h-2.5 w-full rounded-full bg-gray-200">
+					<div class="h-2.5 rounded-full bg-green-600" style="width: {uploadDBPercentage}%"></div>
+				</div>
+			</div>
+		{/if}
+
+		{#if uploadedToDB}
+			<div class="mt-4">
+				<p class="text-sm text-green-600">Дані успішно завантажено в базу даних!</p>
+				<p class="text-sm text-gray-500">
+					Завантажено {uploadedTotalCount} записів для провайдера {providers.find(
+						(p) => p.id === selected_provider
+					)?.name || selected_provider}.
+				</p>
+			</div>
+		{/if}
+
+		<!-- {#if !fileTransformed} -->
 		<div class="mt-4 overflow-x-auto">
 			<table class="min-w-full divide-y divide-gray-200 overflow-hidden rounded-lg shadow-sm">
 				<thead class="bg-gray-50">
@@ -423,41 +549,7 @@
 			</button>
 		</div>
 	{/if}
-
-	{#if uploadingToDB}
-		<div class="mt-4">
-			<p class="text-sm text-gray-700">{uploadDBMessage}</p>
-			<div class="mt-2 h-2.5 w-full rounded-full bg-gray-200">
-				<div class="h-2.5 rounded-full bg-green-600" style="width: {uploadDBPercentage}%"></div>
-			</div>
-		</div>
-	{/if}
-
-	{#if uploadedToDB}
-		<div class="mt-4">
-			<p class="text-sm text-green-600">Дані успішно завантажено в базу даних!</p>
-			<p class="text-sm text-gray-500">
-				Завантажено {uploadedTotalCount} записів для провайдера {providers.find((p) => p.id === selected_provider)?.name || selected_provider}.
-			</p>
-		</div>
-	{/if}
-
-	{#if !fileLoading && !transformingData && fileTransformed && fullFileData.length > 0}
-		<div class="mt-4 text-center">
-			<button
-				class="btn preset-filled-primary-950-50"
-				onclick={handleUploadToDatabase}
-				disabled={uploadingToDB || !selected_provider}
-				aria-busy={uploadingToDB}
-			>
-				{#if uploadingToDB}
-					Завантаження в БД...
-				{:else}
-					Завантажити дані в базу даних
-				{/if}
-			</button>
-		</div>
-	{/if}
+	<!-- {/if} -->
 
 	{#if fileTransformed && fullFileData.length > 0}
 		<div class="mt-8">
@@ -496,7 +588,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200 bg-white">
-						{#each (fullFileData as TransformedItem[]).slice(0, 5) as item}
+						{#each (transformedData as TransformedItem[]).slice(0, 5) as item}
 							<tr>
 								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{item.brand}</td>
 								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{item.article}</td>
@@ -517,7 +609,7 @@
 				</table>
 			</div>
 			{#if fullFileData.length > 5}
-				<p class="mt-2 text-sm text-gray-600">...та ще {fullFileData.length - 5} рядків.</p>
+				<p class="mt-2 text-sm text-gray-600">...та ще {transformedData.length - 5} рядків. ({fullFileData.length - 5})</p>
 			{/if}
 		</div>
 	{/if}
