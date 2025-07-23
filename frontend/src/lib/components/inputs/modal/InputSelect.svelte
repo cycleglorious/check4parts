@@ -29,7 +29,6 @@
 	}: Props = $props();
 
 	let selectedCountry = $state<string[]>([]);
-	$inspect(selectedCountry, intialValue);
 
 	$effect(() => {
 		value = selectedCountry[0];

@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import EdidDeleteElementMenu from '$lib/components/table/EditDeleteModel.svelte';
+	import EdidDeleteElementMenu from '$lib/components/modals/EditDeleteModalInTable.svelte';
 	import toast from 'svelte-french-toast';
 
 	let { data, form } = $props();
@@ -12,6 +13,7 @@
 			toast.success('Користувача успішно додано', {
 				duration: 2000
 			});
+			goto('/home/settings/users', { replaceState: true, noScroll: true, keepFocus: true });
 		}
 		if (form) {
 			if (form.success) {
@@ -28,8 +30,8 @@
 	});
 
 	let search = $state<string>('');
-	let searchQuery = $derived(search.toLocaleLowerCase());
-	let filteredStaff = $derived(
+	let search_query = $derived(search.toLocaleLowerCase());
+	let filtered_staff = $derived(
 		staff.filter((person) =>
 			[
 				person.first_name,
@@ -39,7 +41,7 @@
 				person.trading_points?.name,
 				person.trading_points?.street,
 				person.trading_points?.locality
-			].some((field) => field?.toLowerCase().includes(searchQuery))
+			].some((field) => field?.toLowerCase().includes(search_query))
 		)
 	);
 </script>
@@ -59,7 +61,7 @@
 	<label class="relative block w-full focus-within:text-gray-500">
 		<img src="/search-icon.svg" alt="search" class="absolute top-1/5 left-4 size-6" />
 		<input
-			type="search"
+			type="text"
 			name="search"
 			id="search"
 			bind:value={search}
@@ -82,7 +84,7 @@
 						</tr>
 					</thead>
 					<tbody class="!divide-primary-950 !divide-y-2">
-						{#each filteredStaff as person (person.id)}
+						{#each filtered_staff as person (person.id)}
 							<tr class="divide-primary-950 group hover:bg-primary-50 w-full divide-x-2">
 								<td class="w-1/3">
 									{person.first_name}

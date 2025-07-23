@@ -3,13 +3,12 @@
 
 	let { data } = $props();
 	let { suppliers } = $derived(data);
-	$inspect(suppliers);
 </script>
 
 {#snippet noSuppliersMessage()}
 	<div class="flex h-full w-full flex-col items-center justify-center">
 		<h3 class="h5">Тут поки що порожньо.</h3>
-		<p>Додайте першого постачальника, щоб почати .</p>
+		<p>Додайте першого постачальника, щоб почати.</p>
 	</div>
 {/snippet}
 
@@ -36,7 +35,7 @@
 							<tr
 								onmousemove={() => preloadData('/home/settings/suppliers/' + supplier.id)}
 								onclick={() => goto('/home/settings/suppliers/' + supplier.id)}
-								class="divide-primary-950 group hover:bg-primary-50 w-full divide-x-2"
+								class="divide-primary-950 hover:bg-primary-50 group w-full divide-x-2"
 								class:bg-amber-100={supplier.state === 'paused'}
 							>
 								<td>{supplier.providers.name}</td>

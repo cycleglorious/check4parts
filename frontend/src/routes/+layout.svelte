@@ -2,13 +2,12 @@
 	import '../app.css';
 
 	import { invalidate } from '$app/navigation';
-	import { onMount } from 'svelte';
 	import { Toaster } from 'svelte-french-toast';
 
 	let { data, children } = $props();
 	let { session, supabase } = $derived(data);
 
-	onMount(() => {
+	$effect(() => {
 		const { data } = supabase.auth.onAuthStateChange((_, newSession) => {
 			if (newSession?.expires_at !== session?.expires_at) {
 				invalidate('supabase:auth');

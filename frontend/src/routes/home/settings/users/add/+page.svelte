@@ -1,9 +1,8 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import InputPasswordField from '$lib/components/card-form/InputPasswordField.svelte';
-	import InputSelect from '$lib/components/card-form/InputSelect.svelte';
-	import InputTextField from '$lib/components/card-form/InputTextField.svelte';
-	import { redirect } from '@sveltejs/kit';
+	import InputPasswordField from '$lib/components/inputs/card/InputPasswordField.svelte';
+	import InputSelect from '$lib/components/inputs/card/InputSelect.svelte';
+	import InputTextField from '$lib/components/inputs/card/InputTextField.svelte';
 	import toast from 'svelte-french-toast';
 
 	let { data, form } = $props();
@@ -12,9 +11,7 @@
 	let password = $state('');
 	let repeat_password = $state('');
 
-	let repeat_password_invalid = $derived<boolean>(password !== repeat_password);
-
-	$inspect(form);
+	let repeatPasswordInvalid = $derived<boolean>(password !== repeat_password);
 
 	$effect(() => {
 		if (form?.success) {
@@ -133,7 +130,7 @@
 						name="repeat_password"
 						placeholder="Повторіть пароль"
 						bind:value={repeat_password}
-						{repeat_password_invalid}
+						repeat_password_invalid={repeatPasswordInvalid}
 						missing={form?.missing}
 					/>
 				</div>
@@ -159,7 +156,7 @@
 					<button
 						class="btn preset-filled-primary-950-50 mt-5 w-[10rem]"
 						type="submit"
-						disabled={repeat_password_invalid}
+						disabled={repeatPasswordInvalid}
 					>
 						Додати
 					</button>

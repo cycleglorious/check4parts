@@ -2,11 +2,11 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ depends, locals: { supabase }, params }) => {
 	depends('supabase:db:staff');
-	const userId = params.id;
+	const user_id = params.id;
 	const { data: user } = await supabase
 		.from('staff')
 		.select('*,roles(name),trading_points(*)')
-		.eq('id', userId)
+		.eq('id', user_id)
 		.single();
 
 	depends('supabase:db:roles');
@@ -19,16 +19,15 @@ export const load: PageServerLoad = async ({ depends, locals: { supabase }, para
 
 export const actions = {
 	edit: async ({ request, locals: { supabase } }) => {
-		const formData = await request.formData();
-		const id = formData.get('id')?.toString();
-		const first_name = formData.get('first_name')?.toString();
-		const last_name = formData.get('last_name')?.toString();
-		const middle_name = formData.get('middle_name')?.toString();
-		const phone_number = formData.get('phone')?.toString();
-		const role = formData.get('role')?.toString();
-		const trading_point = formData.get('trading_point')?.toString();
+		const form_data = await request.formData();
 
-		console.log({ role, trading_point });
+		const id = form_data.get('id')?.toString();
+		const first_name = form_data.get('first_name')?.toString();
+		const last_name = form_data.get('last_name')?.toString();
+		const middle_name = form_data.get('middle_name')?.toString();
+		const phone_number = form_data.get('phone')?.toString();
+		const role = form_data.get('role')?.toString();
+		const trading_point = form_data.get('trading_point')?.toString();
 
 		const { error } = await supabase
 			.from('staff')
@@ -43,10 +42,8 @@ export const actions = {
 			.eq('id', id);
 
 		if (error) {
-			console.log(error);
 			return { success: false, message: error.message };
 		} else {
-			console.log('updated', id);
 			return { success: true, message: 'updated' };
 		}
 	}

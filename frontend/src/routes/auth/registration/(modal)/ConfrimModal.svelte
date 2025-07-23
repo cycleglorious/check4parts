@@ -48,7 +48,7 @@
 						onclick={() => {
 							modalClose;
 							goto('/auth/login');
-							}}>Закрити</button
+						}}>Закрити</button
 					>
 				</div>
 			</Dialog.Description>

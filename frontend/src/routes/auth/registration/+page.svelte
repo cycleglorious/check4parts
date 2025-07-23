@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import InputTextField from '$lib/components/login-register-form/InputTextField.svelte';
+	import InputTextField from '$lib/components/inputs/login-register/InputTextField.svelte';
 	import toast from 'svelte-french-toast';
 	import ConfrimModal from './(modal)/ConfrimModal.svelte';
 
@@ -17,7 +17,7 @@
 			toast.error('Заповніть всі поля');
 			current_step = 'name';
 		}
-	})
+	});
 </script>
 
 <ConfrimModal bind:open={openModal} />
@@ -80,13 +80,13 @@
 			/>
 			<!-- contacts -->
 			<InputTextField
-			lable="Назва компанія"
-			placeholder="Введіть назву компанії"
-			name="company_name"
-			type="text"
-			hide={current_step !== 'contacts'}
-			missing={form?.missing}
-		/>
+				lable="Назва компанія"
+				placeholder="Введіть назву компанії"
+				name="company_name"
+				type="text"
+				hide={current_step !== 'contacts'}
+				missing={form?.missing}
+			/>
 			<InputTextField
 				lable="Номер телефону"
 				placeholder="Введіть номер телефону"

@@ -37,7 +37,7 @@
 		{#if edit}
 			<Select.Trigger>
 				<div class="badge preset-filled-primary-50-950 size-7 p-0">
-					<img src="/state-arrow.svg" alt="arrow" />
+					<img src="/state-arrow.svg" alt="arrow" height="16" width="16" />
 				</div>
 			</Select.Trigger>
 		{/if}
