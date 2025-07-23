@@ -5,7 +5,12 @@
 	let subMenuOpen = $state<string>();
 </script>
 
-{#snippet menuItem(pageValue: string, pageTitle: string)}
+{#snippet menuItem(
+	pageValue: string,
+	pageTitle: string,
+	pageIcon: string,
+	selectedPageIcon: string
+)}
 	<button
 		class:font-bold={page === pageValue}
 		class="flex items-center gap-2 text-xl"
@@ -17,11 +22,7 @@
 			subMenuOpen = pageValue;
 		}}
 	>
-		<img
-			src={page === pageValue ? `/settings-icon-selected.svg` : `/settings-icon.svg`}
-			alt={pageValue}
-			class=" size-6"
-		/>
+		<img src={page === pageValue ? selectedPageIcon : pageIcon} alt={pageValue} class=" size-6" />
 		{pageTitle}
 	</button>
 {/snippet}
@@ -45,7 +46,12 @@
 <div class="flex flex-col gap-2">
 	<ul>
 		<li>
-			{@render menuItem('settings', 'Налаштування')}
+			{@render menuItem(
+				'settings',
+				'Налаштування',
+				'/settings-icon.svg',
+				'/settings-icon-selected.svg'
+			)}
 			{@render subMenu('settings', undefined, [
 				{ page: 'trading-points', title: 'Торгівельні точки' },
 				{ page: 'users', title: 'Користувачі' },
@@ -53,7 +59,7 @@
 			])}
 		</li>
 		<li>
-			{@render menuItem('prices', 'Прайси')}
+			{@render menuItem('prices', 'Прайси', '/cubes-icon.svg', '/cubes-icon-selected.svg')}
 			{@render subMenu('prices', undefined, [
 				{ page: '', title: 'Історія' },
 				{ page: 'loader', title: 'Завантажити прайси' },
