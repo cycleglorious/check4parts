@@ -9,7 +9,11 @@
 		terminateWorkerUpload,
 		type AppSettings
 	} from '$lib/utils/loader/SupabaseUpload.js';
-	import { StartTransformFileWorker, type TransformedItem, type MappedHeader } from '$lib/utils/loader/TransformFile.svelte.js';
+	import {
+		StartTransformFileWorker,
+		type TransformedItem,
+		type MappedHeader
+	} from '$lib/utils/loader/TransformFile.svelte.js';
 
 	let { data } = $props();
 	let { providers, warehouses } = $derived(data);
@@ -58,7 +62,7 @@
 		mappedHeaders = autoMapHeaders(firstRowHeaders, currentProviderWarehouses);
 	});
 
-	$inspect(mappedHeaders)
+	$inspect(mappedHeaders);
 	function toggleSettingsCollapse() {
 		settingsCollapsed = !settingsCollapsed;
 	}
@@ -200,9 +204,6 @@
 					uploadDBMessage = message;
 					uploadDBPercentage = percentage;
 					uploadedTotalCount = uploadedCount;
-					console.log(
-						`Upload Progress: ${uploadedCount}/${totalCount} (${percentage}%) - ${message}`
-					);
 				}
 			);
 			uploadDBMessage = 'Дані успішно завантажено в базу даних!';
@@ -258,7 +259,7 @@
 	<h3 class="mb-4 flex items-center justify-between text-xl font-semibold text-gray-800">
 		Налаштування
 		<button
-			class="rounded-full p-1 transition-all duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+			class="rounded-full p-1 transition-all duration-200 hover:bg-gray-100 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 			onclick={toggleSettingsCollapse}
 			aria-expanded={!settingsCollapsed}
 			aria-label={settingsCollapsed ? 'Розгорнути налаштування' : 'Згорнути налаштування'}
@@ -289,7 +290,7 @@
 					bind:value={settings.startFrom}
 					placeholder="Наприклад, 2"
 					required
-					class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+					class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
 				/>
 				<p class="mt-1 text-sm text-gray-500">
 					Вкажіть номер рядка, з якого почнеться обробка даних у файлі.
@@ -306,7 +307,7 @@
 					min="1"
 					bind:value={settings.chunkSize}
 					required
-					class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+					class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
 				/>
 				<p class="mt-1 text-sm text-gray-500">
 					Вкажіть максимальну кількість рядків для обробки в одному чанку. Більші чанки швидші, але
@@ -324,7 +325,7 @@
 					min="1"
 					bind:value={settings.concurrencyLimit}
 					required
-					class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
+					class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
 				/>
 				<p class="mt-1 text-sm text-gray-500">
 					Визначте кількість чанків, які будуть завантажуватися паралельно. Більше паралельних
@@ -394,7 +395,7 @@
 	{#if previewData.length > 0}
 		<div class="mt-4">
 			<div>
-				<div class="flex gap-4 h-9">
+				<div class="flex h-9 gap-4">
 					<div class="badge preset-filled-primary-50-950 text-md">
 						<i class="fas fa-file"></i> Розмір: {files ? (files[0].size / 1024).toFixed(2) : '0.00'}
 						KB
@@ -421,7 +422,7 @@
 									<a
 										href="/home/prices/{hashExists[0].id}"
 										target="_blank"
-										class="badge preset-filled-error-50-950 hover:bg-red-100 text-md"
+										class="badge preset-filled-error-50-950 text-md hover:bg-red-100"
 									>
 										<i class="fas fa-times"></i> Хеш існує
 									</a>
@@ -481,7 +482,7 @@
 						{#each fileHeaders as fileHeader}
 							<th
 								scope="col"
-								class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+								class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 							>
 								{getColumnDisplayName(fileHeader, true)}
 							</th>
@@ -492,7 +493,7 @@
 					{#each previewData as row}
 						<tr>
 							{#each fileHeaders as fileHeader}
-								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+								<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
 									{row[fileHeader]}
 								</td>
 							{/each}
@@ -516,7 +517,7 @@
 						<select
 							id="map-{headerMap.value}"
 							bind:value={mappedHeaders[index].header}
-							class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+							class="block w-full rounded-lg border border-gray-300 px-4 py-2 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 						>
 							<option value="">Не обрано</option>
 							{#each fileHeaders as fileHeader}
@@ -562,27 +563,27 @@
 						<tr>
 							<th
 								scope="col"
-								class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+								class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 								>Бренд</th
 							>
 							<th
 								scope="col"
-								class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+								class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 								>Код Бренду</th
 							>
 							<th
 								scope="col"
-								class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+								class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 								>Ціна</th
 							>
 							<th
 								scope="col"
-								class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+								class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 								>Опис</th
 							>
 							<th
 								scope="col"
-								class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500"
+								class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase"
 								>Залишки (Склади)</th
 							>
 						</tr>
@@ -590,12 +591,12 @@
 					<tbody class="divide-y divide-gray-200 bg-white">
 						{#each (transformedData as TransformedItem[]).slice(0, 5) as item}
 							<tr>
-								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{item.brand}</td>
-								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{item.article}</td>
-								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{item.price}</td>
-								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">{item.description}</td
+								<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">{item.brand}</td>
+								<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">{item.article}</td>
+								<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">{item.price}</td>
+								<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">{item.description}</td
 								>
-								<td class="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
+								<td class="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
 									{#each Object.entries(item.rests) as [warehouseId, count]}
 										<div>
 											{currentProviderWarehouses.find((wh) => wh.id === warehouseId)?.name ||
@@ -609,7 +610,9 @@
 				</table>
 			</div>
 			{#if fullFileData.length > 5}
-				<p class="mt-2 text-sm text-gray-600">...та ще {transformedData.length - 5} рядків. ({fullFileData.length - 5})</p>
+				<p class="mt-2 text-sm text-gray-600">
+					...та ще {transformedData.length - 5} рядків. ({fullFileData.length - 5})
+				</p>
 			{/if}
 		</div>
 	{/if}

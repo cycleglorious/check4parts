@@ -29,7 +29,7 @@
 				<p class="text-primary-950-50 text-sm">{part.name}</p>
 			</div>
 			<table class="w-full text-left text-sm text-gray-500 rtl:text-right dark:text-gray-400">
-				<tbody  >
+				<tbody>
 					{@render tableRow('Виробник', part.brand.name)}
 					{@render tableRow('Код', part.code)}
 					{@render tableRow('Опис', part.description)}
@@ -76,9 +76,9 @@
 			</Tabs.Panel>
 			<Tabs.Panel value="additional">
 				<div class="max-w-6xl">
-        <AdditionalTab {additional} />
-        </div>
-      </Tabs.Panel>
+					<AdditionalTab {additional} />
+				</div>
+			</Tabs.Panel>
 		{/snippet}
 	</Tabs>
 </section>

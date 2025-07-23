@@ -1,7 +1,7 @@
 <script lang="ts">
 	import SearchResultCard from '$lib/components/cards/search/SearchResultCard.svelte';
 
-	const { data } = $props(); 
+	const { data } = $props();
 
 	const search_query = $derived(data.searchQuery);
 </script>

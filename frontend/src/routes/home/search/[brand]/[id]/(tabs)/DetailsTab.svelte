@@ -24,7 +24,7 @@
 {/snippet}
 
 <table class="text-left text-sm text-gray-500 rtl:text-right">
-	<tbody  >
+	<tbody>
 		{#each details as detail}
 			{@render tableRow(detail.title, detail.value)}
 		{/each}

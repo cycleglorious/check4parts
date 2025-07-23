@@ -81,7 +81,7 @@
 				name="q"
 				placeholder="🔍 Введіть артикул, бренд або опис"
 				value={query}
-				class="border-primary-300 focus:border-primary-500 focus:ring-primary-200 flex-1 rounded-lg border-2 p-3 transition focus:outline-none focus:ring-2"
+				class="border-primary-300 focus:border-primary-500 focus:ring-primary-200 flex-1 rounded-lg border-2 p-3 transition focus:ring-2 focus:outline-none"
 			/>
 			<button
 				type="submit"
@@ -95,7 +95,9 @@
 
 	<!-- Стан завантаження -->
 	{#if isLoading}
-		<div class="border-primary-200 bg-primary-50 animate-pulse rounded-xl border-2  p-4">Пошук...</div>
+		<div class="border-primary-200 bg-primary-50 animate-pulse rounded-xl border-2 p-4">
+			Пошук...
+		</div>
 
 		<!-- Помилка -->
 	{:else if fetchError}

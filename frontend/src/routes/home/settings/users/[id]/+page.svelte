@@ -96,13 +96,13 @@
 						name="password"
 						placeholder="Введіть пароль"
 						disabled
-						value={""}
+						value={''}
 					/>
 					<InputPasswordField
 						lable="Повторіть пароль"
 						name="repeat_password"
 						placeholder="Повторіть пароль"
-						value={""}
+						value={''}
 						disabled
 					/>
 				</div>

@@ -56,7 +56,7 @@
 	let showDetails = $state(false);
 </script>
 
-<div class="card border-primary-950 border-1 flex flex-col overflow-hidden rounded-xl">
+<div class="card border-primary-950 flex flex-col overflow-hidden rounded-xl border-1">
 	<div
 		id="header"
 		class="bg-primary-950 text-primary-50 flex items-center justify-between gap-2 px-4 py-2"

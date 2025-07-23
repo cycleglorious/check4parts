@@ -34,8 +34,6 @@
 	}: Props = $props();
 
 	onMount(() => {
-		console.log(point?.id);
-		console.log(openState);
 		nameAlreadyExists = false;
 		form = undefined;
 	});

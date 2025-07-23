@@ -25,8 +25,6 @@ export const actions = {
 		const trading_point = form_data.get('trading_point')?.toString();
 		const password = form_data.get('password')?.toString();
 
-		console.log(first_name, last_name, email, role, trading_point, password);
-
 		if (
 			!first_name ||
 			!last_name ||
@@ -41,7 +39,6 @@ export const actions = {
 
 		const { data, error } = await signUpNewUser(email, password);
 
-		console.log(data, error);
 		if (error) {
 			return fail(400, { error: error.code });
 		}
@@ -66,8 +63,6 @@ export const actions = {
 			])
 			.select('*')
 			.single();
-
-		console.log(staff);
 
 		if (staffError) {
 			console.error('Staff insert error:', staffError);

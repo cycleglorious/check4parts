@@ -13,7 +13,7 @@
 			toast.success('Користувача успішно додано', {
 				duration: 2000
 			});
-			goto('/home/settings/users', {replaceState: true, noScroll: true, keepFocus: true})
+			goto('/home/settings/users', { replaceState: true, noScroll: true, keepFocus: true });
 		}
 		if (form) {
 			if (form.success) {

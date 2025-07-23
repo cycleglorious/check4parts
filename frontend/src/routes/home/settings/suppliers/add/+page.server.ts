@@ -20,14 +20,11 @@ export const actions = {
 			form_data.entries().filter(([key]) => key !== 'supplier_id' && key !== 'data_props')
 		);
 		const accessData = Object.fromEntries(entries);
-		console.log('accessData', accessData, form_data);
 
 		const { data, error } = await supabase
 			.from('company_provider')
 			.insert([{ provider_id: supplier_id, access_data: accessData, data: data_props }])
 			.select();
-
-		console.log(data, error);
 
 		if (error) {
 			return { success: false, message: error.message };

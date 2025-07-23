@@ -9,7 +9,6 @@ export const load: PageServerLoad = async ({ depends, locals: { supabase }, para
 		.eq('id', params.id)
 		.single();
 	if (error) {
-		console.log(error);
 		return { supplier: {} };
 	}
 	return {
@@ -21,9 +20,9 @@ export const actions = {
 	delete: async ({ request, locals: { supabase } }) => {
 		const formData = await request.formData();
 		const id = formData.get('id');
-		console.log(id);
+
 		const { error } = await supabase.from('company_provider').delete().eq('id', id);
-		console.log(error);
+
 		if (error) {
 			return { success: false, message: error.message };
 		} else {
@@ -35,7 +34,7 @@ export const actions = {
 
 		const id = form_data.get('id')?.toString();
 		const state = form_data.get('state')?.toString();
-		
+
 		const { error } = await supabase.from('company_provider').update({ state }).eq('id', id);
 		if (error) {
 			return { success: false, message: error.message };
@@ -44,7 +43,6 @@ export const actions = {
 		}
 	},
 	edit: async ({ request, locals: { supabase } }) => {
-		console.log('edit');
 		const formData = await request.formData();
 		const id = formData.get('id')?.toString();
 		const data_props = JSON.parse(formData.get('data_props')?.toString() || '{}') as DataProps[];
@@ -56,8 +54,6 @@ export const actions = {
 			item.value = new_data[item.name] as string;
 			return item;
 		});
-
-		console.log('newData', new_data, data_props);
 
 		const { data, error } = await supabase
 			.from('company_provider')

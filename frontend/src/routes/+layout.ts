@@ -1,5 +1,10 @@
 import { createBrowserClient, createServerClient, isBrowser } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_PRICES_ANON_KEY, PUBLIC_SUPABASE_PRICES_URL, PUBLIC_SUPABASE_URL } from '$env/static/public';
+import {
+	PUBLIC_SUPABASE_ANON_KEY,
+	PUBLIC_SUPABASE_PRICES_ANON_KEY,
+	PUBLIC_SUPABASE_PRICES_URL,
+	PUBLIC_SUPABASE_URL
+} from '$env/static/public';
 import type { LayoutLoad } from './$types';
 import { createClient } from '@supabase/supabase-js';
 // import { createClient } from '@supabase/supabase-js'; // Цей імпорт більше не потрібен, якщо ви використовуєте тільки @supabase/ssr
@@ -14,20 +19,20 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 	// Ініціалізація основного клієнта Supabase
 	const supabase = isBrowser()
 		? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			global: {
-				fetch
-			}
-		})
-		: createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-			global: {
-				fetch
-			},
-			cookies: {
-				getAll() {
-					return data.cookies;
+				global: {
+					fetch
 				}
-			}
-		});
+			})
+		: createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+				global: {
+					fetch
+				},
+				cookies: {
+					getAll() {
+						return data.cookies;
+					}
+				}
+			});
 
 	/**
 	 * Отримуємо сесію з основного клієнта.
@@ -44,24 +49,24 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 	// через cookies/local storage, якщо JWT Secret спільний.
 	const supabasePrices = isBrowser()
 		? createClient(PUBLIC_SUPABASE_PRICES_URL, PUBLIC_SUPABASE_PRICES_ANON_KEY, {
-			global: {
-				headers: {
-					Authorization: `Bearer ${session?.access_token}`
-				},
-			}
-		})
+				global: {
+					headers: {
+						Authorization: `Bearer ${session?.access_token}`
+					}
+				}
+			})
 		: createServerClient(PUBLIC_SUPABASE_PRICES_URL, PUBLIC_SUPABASE_PRICES_ANON_KEY, {
-			global: {
-				headers: {
-					Authorization: `Bearer ${session?.access_token}`
+				global: {
+					headers: {
+						Authorization: `Bearer ${session?.access_token}`
+					}
 				},
-			},
-			cookies: {
-				getAll() {
-					return data.cookies;
-				},
-			}
-		});
+				cookies: {
+					getAll() {
+						return data.cookies;
+					}
+				}
+			});
 
 	const {
 		data: { user }

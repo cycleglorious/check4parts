@@ -40,9 +40,13 @@
 				>
 					<td class="rounded-l-2xl p-2 text-center">
 						<div class="grid grid-cols-[auto_1fr] gap-2">
-              {#if cross.image}
-							<img src={cross.image} alt={cross.name} class="size-12 rounded-md object-cover object-center" />
-              {/if}
+							{#if cross.image}
+								<img
+									src={cross.image}
+									alt={cross.name}
+									class="size-12 rounded-md object-cover object-center"
+								/>
+							{/if}
 							<div>
 								<p class="text-left font-bold">{cross.name}</p>
 								<p class="text-left font-light">

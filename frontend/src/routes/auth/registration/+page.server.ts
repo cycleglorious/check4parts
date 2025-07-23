@@ -25,16 +25,6 @@ export const actions: Actions = {
 			!street ||
 			!phone
 		) {
-			console.log('missing', {
-				first_name,
-				last_name,
-				email,
-				middle_name,
-				region,
-				city,
-				street,
-				phone
-			});
 			return fail(400, { missing: true });
 		}
 
