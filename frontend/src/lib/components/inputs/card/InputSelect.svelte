@@ -15,6 +15,7 @@
 		required?: boolean;
 		missing?: boolean;
 		intialValue?: string;
+		disabled?: boolean;
 	}
 
 	let {
@@ -25,7 +26,8 @@
 		value = $bindable(),
 		required = false,
 		missing = false,
-		intialValue
+		intialValue,
+		disabled = false
 	}: Props = $props();
 
 	let selectedCountry = $state<string[]>([]);
@@ -50,6 +52,7 @@
 	{label}
 	{placeholder}
 	{required}
+	{disabled}
 	defaultValue={intialValue ? [intialValue] : []}
 >
 	{#snippet item(item)}

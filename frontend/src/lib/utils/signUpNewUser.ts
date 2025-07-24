@@ -5,6 +5,6 @@ export async function signUpNewUser(email: string, password: string) {
 		email: email,
 		password: password
 	});
-	console.log(data, error);
+
 	return { data, error };
 }
