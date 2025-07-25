@@ -2,7 +2,7 @@ import logging
 from typing import List, Optional, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from app.adapters.omega_adapter import OmegaAdapter, OmegaAPIError
 
@@ -66,13 +66,6 @@ class UploadPhotoRequest(BaseModel):
     product_id: Optional[str] = Field(None, description="Product ID")
     data: str = Field(..., description="Base64 encoded image data")
     file_name: str = Field(..., description="File name with .jpg extension")
-
-    @field_validator("file_name")
-    def validate_file_extension(self, v):
-        if not v.lower().endswith(".jpg"):
-            raise ValueError("File name must end with .jpg extension")
-        return v
-
 
 class GetKindClaimsRequest(BaseModel):
     product_id: str = Field(..., description="Product ID")
@@ -139,16 +132,6 @@ class GetExpenseDocumentRequest(BaseModel):
 class GetExpenseDocumentListRequest(BaseModel):
     start_date: str = Field(..., description="Start date in DD.MM.YYYY format")
     end_date: str = Field(..., description="End date in DD.MM.YYYY format")
-
-    @field_validator("start_date", "end_date")
-    def validate_date_format(self, v):
-        from datetime import datetime
-
-        try:
-            datetime.strptime(v, "%d.%m.%Y")
-            return v
-        except ValueError:
-            raise ValueError("Date must be in DD.MM.YYYY format")
 
 
 class GetExpenseDocumentDetailsRequest(BaseModel):
