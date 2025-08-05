@@ -44,10 +44,19 @@
 	</section>
 
 	<menu class="flex h-full flex-col gap-2 transition-all">
-		<div class="h-full min-w-3xs overflow-auto">
+		<div class="min-w-3xs h-full overflow-auto">
 			<Menu page={currentPage} />
 		</div>
-		<button type="button" class="btn preset-filled-primary-950-50" onclick={logout}>Logout</button>
+		<div>
+			<a class="flex items-center gap-2 text-xl" href="/home/profile" class:font-bold={currentPage === 'profile' } >
+				<img src={ currentPage === 'profile' ? "/cubes-icon-selected.svg" : "/cubes-icon.svg"} alt="Профіль користувача" class=" size-6" />
+				Профіль користувача
+			</a>
+			<button class="flex items-center gap-2 text-xl" onclick={logout}>
+				<img src="/settings-icon.svg" alt="Вийти" class=" size-6" />
+				Вийти
+			</button>
+		</div>
 	</menu>
 	<section class="overflow-y-auto rounded-3xl border-[1.5rem] border-white bg-white">
 		{@render children()}
