@@ -174,7 +174,7 @@ async def search_products(request: SearchProductsRequest):
         )
 
 
-@router.get("/products/search")
+@router.get("/search/products")
 async def search_products_query(
     query: str = Query(..., min_length=1, description="Search query"),
     category_id: Optional[int] = Query(None, gt=0, description="Category ID filter"),

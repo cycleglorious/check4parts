@@ -132,7 +132,7 @@ async def get_product_groups():
     return await adapter.get_product_groups()
 
 
-@router.get("/search/products/")
+@router.get("/search/products")
 async def search_products(
     q: str,
     request: Request,

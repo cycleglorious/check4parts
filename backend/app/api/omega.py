@@ -899,7 +899,7 @@ async def get_receivables_data(request: ReceivablesRequest) -> Dict[str, Any]:
 
 
 # Search endpoints
-@router.post("/product/search")
+@router.post("/search/products")
 async def search_products(request: SearchRequest) -> Dict[str, Any]:
     async with OmegaAdapter() as adapter:
         return await handle_api_errors(
