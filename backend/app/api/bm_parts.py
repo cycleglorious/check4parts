@@ -153,6 +153,12 @@ async def search_products(
     )
 
 
+@router.get("/products/{product_uuid}/additional")
+async def get_models_by_brand(product_uuid: str):
+    adapter = BMPartsAdapter()
+    return await adapter.get_product_additional(product_uuid)
+
+
 @router.get("/models_by_brand/{car_name}")
 async def get_models_by_brand(car_name: str):
     adapter = BMPartsAdapter()
