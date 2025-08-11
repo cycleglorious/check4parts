@@ -49,7 +49,7 @@
 		<div class="row-span-2 flex h-40 w-40 items-center justify-center p-2">
 			<img src="/avatar.svg" alt="Аватар" class="h-full w-full object-contain" />
 		</div>
-		<div class="flex items-center gap-2">
+    <div class="flex items-center gap-2">
 			<h2 class="self-end text-2xl font-medium text-gray-800">
 				{staff.last_name}
 				{staff.first_name}
