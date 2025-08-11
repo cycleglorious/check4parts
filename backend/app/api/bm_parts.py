@@ -132,14 +132,31 @@ async def get_product_groups():
     return await adapter.get_product_groups()
 
 
-@router.get("/search/products/")
-async def search_products(q: str, request: Request):
+@router.get("/search/products")
+async def search_products(
+    q: str,
+    request: Request,
+    include_crosses: bool = False,
+    include_additional: bool = False,
+):
     adapter = BMPartsAdapter()
     filters = dict(request.query_params)
-
     filters.pop("q", None)
+    filters.pop("include_crosses", None)
+    filters.pop("include_additional", None)
 
-    return await adapter.search_products(q, **filters)
+    return await adapter.search_products_enhanced(
+        q,
+        include_crosses=include_crosses,
+        include_additional=include_additional,
+        **filters
+    )
+
+
+@router.get("/products/{product_uuid}/additional")
+async def get_models_by_brand(product_uuid: str):
+    adapter = BMPartsAdapter()
+    return await adapter.get_product_additional(product_uuid)
 
 
 @router.get("/models_by_brand/{car_name}")

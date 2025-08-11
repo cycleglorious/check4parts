@@ -21,13 +21,6 @@ class ProductItem(BaseModel):
     quantity: int = Field(..., gt=0, description="Quantity must be positive")
     price: Optional[float] = Field(None, ge=0, description="Product price")
 
-    @field_validator("id", "sku", mode="before")
-    def validate_product_identifier(self, v, info):
-        values = info.data
-        if not v and not values.get("id") and not values.get("sku"):
-            raise ValueError("Either 'id' or 'sku' must be provided")
-        return v
-
     class Config:
         validate_assignment = True
 
@@ -46,14 +39,6 @@ class PriceFilters(BaseModel):
     min_price: Optional[float] = Field(None, ge=0, description="Minimum price")
     max_price: Optional[float] = Field(None, ge=0, description="Maximum price")
     in_stock: Optional[bool] = Field(None, description="Filter by stock availability")
-
-    @field_validator("max_price")
-    def validate_price_range(self, v, info):
-        values = info.data
-        if v is not None and values.get("min_price") is not None:
-            if v < values["min_price"]:
-                raise ValueError("max_price cannot be less than min_price")
-        return v
 
 
 class GetPricesRequest(BaseModel):
@@ -189,7 +174,7 @@ async def search_products(request: SearchProductsRequest):
         )
 
 
-@router.get("/products/search")
+@router.get("/search/products")
 async def search_products_query(
     query: str = Query(..., min_length=1, description="Search query"),
     category_id: Optional[int] = Query(None, gt=0, description="Category ID filter"),

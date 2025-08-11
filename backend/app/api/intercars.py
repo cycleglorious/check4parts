@@ -114,7 +114,7 @@ async def inventory_quote(request: InventoryQuoteRequest):
         return await handle_api_errors(adapter.inventory_quote, lines_data)
 
 
-@router.get("/inventory/stock")
+@router.get("/search/products")
 async def get_stock_balance(
     sku: List[str] = Query(..., description="List of SKUs"),
     location: Optional[List[str]] = Query(None, description="List of locations"),
