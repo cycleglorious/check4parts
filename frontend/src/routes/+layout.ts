@@ -7,7 +7,6 @@ import {
 } from '$env/static/public';
 import type { LayoutLoad } from './$types';
 import { createClient } from '@supabase/supabase-js';
-// import { createClient } from '@supabase/supabase-js'; // Цей імпорт більше не потрібен, якщо ви використовуєте тільки @supabase/ssr
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 	/**
@@ -43,10 +42,10 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 		data: { session }
 	} = await supabase.auth.getSession();
 
-	// Ініціалізація клієнта Supabase для цін
-	// ВАЖЛИВО: Видалено ручну передачу заголовка Authorization.
-	// createBrowserClient та createServerClient автоматично керуватимуть токенами
-	// через cookies/local storage, якщо JWT Secret спільний.
+	const {
+		data: { user }
+	} = await supabase.auth.getUser();
+
 	const supabasePrices = isBrowser()
 		? createClient(PUBLIC_SUPABASE_PRICES_URL, PUBLIC_SUPABASE_PRICES_ANON_KEY, {
 				global: {
@@ -67,10 +66,5 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 					}
 				}
 			});
-
-	const {
-		data: { user }
-	} = await supabase.auth.getUser();
-
 	return { session, supabase, user, supabasePrices };
 };
