@@ -1,58 +1,51 @@
-import httpx
-from fastapi import HTTPException
+from typing import Any
 
+import httpx
+
+from app.adapters.base import ExternalAPIAdapter, ExternalAPIError
 from app.config import BM_PARTS_TOKEN
 
 
-class BMPartsAdapter:
-    BASE_URL = "https://api.bm.parts"
+class BMPartsAdapterError(ExternalAPIError):
+    """HTTP error raised when the BM Parts upstream returns an error."""
 
-    def __init__(self):
-        self.token = BM_PARTS_TOKEN
-        self.headers = {
-            "Authorization": BM_PARTS_TOKEN,
-        }
+    def __init__(self, provider: str = "BM Parts", **kwargs) -> None:
+        super().__init__(provider, **kwargs)
+
+
+class BMPartsAdapter(ExternalAPIAdapter):
+    """Asynchronous client for interacting with the BM Parts REST API."""
+
+    BASE_URL = "https://api.bm.parts"
+    PROVIDER_NAME = "BM Parts"
+    ERROR_CLS = BMPartsAdapterError
+
+    def __init__(self, client: httpx.AsyncClient | None = None) -> None:
+        headers: dict[str, str] = {}
+        if BM_PARTS_TOKEN:
+            headers["Authorization"] = BM_PARTS_TOKEN
+        super().__init__(client=client, default_headers=headers)
 
     async def fetch(
-        self, endpoint: str, params: dict = None, method: str = "GET", data: dict = None
-    ):
-        async with httpx.AsyncClient() as client:
-            if method == "GET":
-                response = await client.get(
-                    f"{self.BASE_URL}{endpoint}", params=params, headers=self.headers
-                )
-            elif method == "POST":
-                response = await client.post(
-                    f"{self.BASE_URL}{endpoint}",
-                    json=data,
-                    params=params,
-                    headers=self.headers,
-                )
-            elif method == "PUT":
-                response = await client.put(
-                    f"{self.BASE_URL}{endpoint}",
-                    json=data,
-                    params=params,
-                    headers=self.headers,
-                )
-            elif method == "DELETE":
-                response = await client.delete(
-                    f"{self.BASE_URL}{endpoint}", params=params, headers=self.headers
-                )
+        self, endpoint: str, params: dict | None = None, method: str = "GET", data: dict | None = None
+    ) -> Any:
+        """Issue an HTTP request against the BM Parts API.
 
-            response.raise_for_status()
-            return response.json()
+        Args:
+            endpoint: Relative API path (e.g. ``"/profile/me"``).
+            params: Optional query parameters to append to the request.
+            method: HTTP verb used for the request.
+            data: Optional JSON payload for POST/PUT/DELETE requests.
+
+        Returns:
+            The decoded JSON response returned by the upstream service.
+        """
+
+        return await self.request(method, endpoint, params=params, json=data)
 
     async def get_profile(self):
-        url = f"{self.BASE_URL}/profile/me"
-        headers = {"Authorization": self.token}
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code, detail=response.json()
-                )
-            return response.json()
+        endpoint = "/profile/me"
+        return await self.fetch(endpoint)
 
     async def get_aggregations_advertisements(self):
         endpoint = "/search/products/aggregations/advertisements"
@@ -158,8 +151,7 @@ class BMPartsAdapter:
                             if additional_data:
                                 product_data["additional"] = additional_data
 
-                    except Exception as e:
-                        print(f"Warning: Could not enhance product {product_uuid}: {e}")
+                    except BMPartsAdapterError:
                         continue
 
         return basic_results
@@ -265,10 +257,10 @@ class BMPartsAdapter:
         params = {"response_fields": response_fields}
         return await self.fetch(endpoint, params=params)
 
-    async def delete_reserves(self, orders: list):
+    async def delete_reserves(self, orders: list[str]):
         endpoint = "/shopping/reserves"
-        params = {"orders": ",".join(orders)}
-        return await self.fetch(endpoint, method="DELETE", params=params)
+        data = {"orders": orders}
+        return await self.fetch(endpoint, method="DELETE", data=data)
 
     async def get_carts(self):
         endpoint = "/shopping/carts"
@@ -282,18 +274,21 @@ class BMPartsAdapter:
     async def add_product_to_cart(
         self, cart_uuid: str, product_uuid: str, quantity: int
     ):
-        endpoint = f"/shopping/cart/{cart_uuid}/product/{product_uuid}/{quantity}"
-        return await self.fetch(endpoint, method="POST")
+        endpoint = f"/shopping/cart/{cart_uuid}/product"
+        data = {"product_uuid": product_uuid, "quantity": quantity}
+        return await self.fetch(endpoint, method="POST", data=data)
 
     async def update_product_quantity_in_cart(
         self, cart_uuid: str, product_uuid: str, quantity: int
     ):
-        endpoint = f"/shopping/cart/{cart_uuid}/product/{product_uuid}/{quantity}"
-        return await self.fetch(endpoint, method="PUT")
+        endpoint = f"/shopping/cart/{cart_uuid}/product"
+        data = {"product_uuid": product_uuid, "quantity": quantity}
+        return await self.fetch(endpoint, method="PUT", data=data)
 
     async def delete_product_from_cart(self, cart_uuid: str, product_uuid: str):
-        endpoint = f"/shopping/cart/{cart_uuid}/product/{product_uuid}"
-        return await self.fetch(endpoint, method="DELETE")
+        endpoint = f"/shopping/cart/{cart_uuid}/product"
+        data = {"product_uuid": product_uuid}
+        return await self.fetch(endpoint, method="DELETE", data=data)
 
     async def delete_cart(self, cart_uuid: str):
         endpoint = f"/shopping/cart/{cart_uuid}"
@@ -398,9 +393,9 @@ class BMPartsAdapter:
         endpoint = "/returns/products"
         return await self.fetch(endpoint)
 
-    async def create_return_request(self, params: dict):
+    async def create_return_request(self, data: dict):
         endpoint = "/returns/request"
-        return await self.fetch(endpoint, params=params, method="POST")
+        return await self.fetch(endpoint, data=data, method="POST")
 
     async def get_return_causes(self):
         endpoint = "/returns/causes"
@@ -408,4 +403,5 @@ class BMPartsAdapter:
 
     async def notify_return(self, text: str):
         endpoint = "/returns/notify"
-        return await self.fetch(endpoint, params={"text": text}, method="POST")
+        payload = {"text": text}
+        return await self.fetch(endpoint, data=payload, method="POST")

@@ -1,9 +1,11 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 import httpx
+
+from app.services.token_cache import CachedToken, TokenCacheProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +21,8 @@ class IntercarsAPIError(Exception):
 
 
 class IntercarsAdapter:
+    """High-level asynchronous client for the InterCars partner API."""
+
     BASE_URL = "https://webapi.intercars.eu"
     TOKEN_ENDPOINT = "/v1/oauth2/token"
     API_VERSION = "v1"
@@ -28,12 +32,19 @@ class IntercarsAdapter:
     RETRY_BACKOFF = 1.0
     TOKEN_BUFFER_SECONDS = 300
 
-    def __init__(self, client_id: str = None, client_secret: str = None):
+    def __init__(
+        self,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+        token_cache: TokenCacheProtocol | None = None,
+    ):
         self._client_id = client_id
         self._client_secret = client_secret
         self._access_token: Optional[str] = None
         self._token_expires_at: Optional[datetime] = None
         self._client: Optional[httpx.AsyncClient] = None
+        self._refresh_token: Optional[str] = None
+        self._token_cache = token_cache
 
     async def __aenter__(self):
         self._client = httpx.AsyncClient(
@@ -55,6 +66,11 @@ class IntercarsAdapter:
             < self._token_expires_at
         )
 
+    def _cache_key(self) -> Optional[Tuple[str, str]]:
+        if not self._client_id or not self._client_secret:
+            return None
+        return self._client_id, self._client_secret
+
     async def _get_client(self) -> httpx.AsyncClient:
         if not self._client:
             self._client = httpx.AsyncClient(
@@ -63,7 +79,51 @@ class IntercarsAdapter:
             )
         return self._client
 
+    async def _load_cached_token(self) -> None:
+        if not self._token_cache:
+            return
+
+        cache_key = self._cache_key()
+        if not cache_key:
+            return
+
+        cached_token = await self._token_cache.get(*cache_key)
+        if not cached_token:
+            return
+
+        self._access_token = cached_token.access_token
+        self._refresh_token = cached_token.refresh_token
+        self._token_expires_at = cached_token.expires_at
+
+    async def _store_token_in_cache(self) -> None:
+        if not self._token_cache:
+            return
+
+        cache_key = self._cache_key()
+        if not cache_key or not self._access_token or not self._token_expires_at:
+            return
+
+        token = CachedToken(
+            access_token=self._access_token,
+            refresh_token=self._refresh_token,
+            expires_at=self._token_expires_at,
+        )
+        await self._token_cache.set(*cache_key, token)
+
+    async def _clear_cached_token(self) -> None:
+        if not self._token_cache:
+            return
+
+        cache_key = self._cache_key()
+        if not cache_key:
+            return
+
+        await self._token_cache.clear(*cache_key)
+
     async def _ensure_authenticated(self) -> None:
+        if not self._is_token_valid:
+            await self._load_cached_token()
+
         if not self._is_token_valid:
             if not self._client_id or not self._client_secret:
                 raise IntercarsAPIError(401, "Authentication credentials not provided")
@@ -90,6 +150,7 @@ class IntercarsAdapter:
 
             result = response.json()
             self._access_token = result.get("access_token")
+            self._refresh_token = result.get("refresh_token")
 
             if not self._access_token:
                 raise IntercarsAPIError(
@@ -98,6 +159,8 @@ class IntercarsAdapter:
 
             expires_in = result.get("expires_in", 3600)
             self._token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+
+            await self._store_token_in_cache()
 
             logger.info("Successfully authenticated with InterCars API")
             return result
@@ -126,6 +189,8 @@ class IntercarsAdapter:
         if response.status_code == 401:
             self._access_token = None
             self._token_expires_at = None
+            self._refresh_token = None
+            await self._clear_cached_token()
 
         raise IntercarsAPIError(response.status_code, error_message, error_data)
 
@@ -187,11 +252,15 @@ class IntercarsAdapter:
                 )
 
     async def authenticate(self, client_id: str, client_secret: str) -> Dict[str, Any]:
+        """Authenticate using the provided client credentials."""
+
         self._client_id = client_id
         self._client_secret = client_secret
         return await self._authenticate()
 
     async def inventory_quote(self, lines: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Request a quote for the given order lines."""
+
         if not lines:
             raise IntercarsAPIError(400, "Lines cannot be empty")
 
@@ -205,6 +274,8 @@ class IntercarsAdapter:
         locations: Optional[List[str]] = None,
         ship_to: Optional[str] = None,
     ) -> Dict[str, Any]:
+        """Check stock availability for SKUs with optional location filters."""
+
         if not skus:
             raise IntercarsAPIError(400, "SKUs cannot be empty")
 
@@ -217,6 +288,8 @@ class IntercarsAdapter:
         return await self._make_request("GET", "inventory/stock", params=params)
 
     async def inventory_stock(self, skus: List[str], location: str) -> Dict[str, Any]:
+        """Retrieve stock details for SKUs at a specific location."""
+
         if not skus:
             raise IntercarsAPIError(400, "SKUs cannot be empty")
         if not location:
@@ -236,6 +309,8 @@ class IntercarsAdapter:
         offset: int = 1,
         limit: int = 20,
     ) -> Dict[str, Any]:
+        """Search delivery metadata within a date range."""
+
         self._validate_date_range(creation_date_from, creation_date_to)
         self._validate_pagination(offset, limit)
 
@@ -248,6 +323,8 @@ class IntercarsAdapter:
         return await self._make_request("GET", "delivery/metadata", params=params)
 
     async def get_delivery(self, delivery_id: str) -> Dict[str, Any]:
+        """Fetch a single delivery record by identifier."""
+
         if not delivery_id or not delivery_id.strip():
             raise IntercarsAPIError(400, "Delivery ID cannot be empty")
 
@@ -256,6 +333,8 @@ class IntercarsAdapter:
     async def search_invoices(
         self, issue_date_from: str, issue_date_to: str, offset: int = 1, limit: int = 20
     ) -> Dict[str, Any]:
+        """Search invoices issued within the specified date range."""
+
         self._validate_date_range(issue_date_from, issue_date_to)
         self._validate_pagination(offset, limit)
 
@@ -268,12 +347,16 @@ class IntercarsAdapter:
         return await self._make_request("GET", "invoice/metadata", params=params)
 
     async def get_invoice(self, invoice_id: str) -> Dict[str, Any]:
+        """Retrieve invoice details by identifier."""
+
         if not invoice_id or not invoice_id.strip():
             raise IntercarsAPIError(400, "Invoice ID cannot be empty")
 
         return await self._make_request("GET", f"invoice/{invoice_id.strip()}")
 
     async def get_requisition(self, requisition_id: str) -> Dict[str, Any]:
+        """Fetch requisition information for the given identifier."""
+
         if not requisition_id or not requisition_id.strip():
             raise IntercarsAPIError(400, "Requisition ID cannot be empty")
 
@@ -284,6 +367,8 @@ class IntercarsAdapter:
     async def submit_requisition(
         self, requisition_data: Dict[str, Any]
     ) -> Dict[str, Any]:
+        """Submit a new requisition payload to InterCars."""
+
         if not requisition_data:
             raise IntercarsAPIError(400, "Requisition data cannot be empty")
 
@@ -297,6 +382,8 @@ class IntercarsAdapter:
     async def cancel_requisition(
         self, requisition_id: str, ship_to: Optional[str] = None
     ) -> Dict[str, Any]:
+        """Cancel an existing requisition optionally scoped to a ship-to."""
+
         if not requisition_id or not requisition_id.strip():
             raise IntercarsAPIError(400, "Requisition ID cannot be empty")
 
@@ -312,6 +399,8 @@ class IntercarsAdapter:
         offset: int = 1,
         limit: int = 20,
     ) -> Dict[str, Any]:
+        """Search orders created within the provided date window."""
+
         self._validate_date_range(creation_date_from, creation_date_to)
         self._validate_pagination(offset, limit)
 
@@ -326,18 +415,26 @@ class IntercarsAdapter:
         )
 
     async def get_order(self, order_id: str) -> Dict[str, Any]:
+        """Retrieve order details by identifier."""
+
         if not order_id or not order_id.strip():
             raise IntercarsAPIError(400, "Order ID cannot be empty")
 
         return await self._make_request("GET", f"sales/order/{order_id.strip()}")
 
     async def get_customer(self) -> Dict[str, Any]:
+        """Return the primary customer record associated with the token."""
+
         return await self._make_request("GET", "customer")
 
     async def get_customer_finances(self) -> Dict[str, Any]:
+        """Retrieve customer finance metrics such as balance and limits."""
+
         return await self._make_request("GET", "customer/finances")
 
     async def calculate_item_price(self, lines: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate pricing for a set of items."""
+
         if not lines:
             raise IntercarsAPIError(400, "Lines cannot be empty")
 
