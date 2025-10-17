@@ -3,11 +3,6 @@
 
 	const { data } = $props();
 	const { warehouses, query, data: results, fetchError } = $derived(data);
-<<<<<<< HEAD:frontend/src/routes/home/settings/suppliers/loaded/search/+page@home.svelte
-	$inspect(data);
-=======
-	$inspect(data)
->>>>>>> fb48042 (changed price loader to work with hashes):frontend/src/routes/home/prices/search/+page.svelte
 	let isLoading = $state(false);
 
 	afterNavigate(() => {
