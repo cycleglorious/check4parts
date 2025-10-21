@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, preloadData } from '$app/navigation';
 	import { slide } from 'svelte/transition';
 
 	let { page }: { page: string } = $props();
@@ -25,6 +25,11 @@
 			subMenuOpen = pageValue;
 			if (link) {
 				goto(link);
+			}
+		}}
+		onmousemove={() => {
+			if (link) {
+				preloadData(link);
 			}
 		}}
 	>
