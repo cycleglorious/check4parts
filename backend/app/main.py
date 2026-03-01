@@ -1,17 +1,20 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
-from app.api import general_adapter, auth
+
+from app.api import PROVIDER_REGISTRY, auth
+
+load_dotenv()
 
 app = FastAPI()
 
-app.include_router(general_adapter.router, prefix="/api", tags=["API Adapter"])
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+
+for _, router in PROVIDER_REGISTRY.items():
+    app.include_router(router)
 
 
 @app.get("/")
 async def root():
+    """Return a simple health-check payload for uptime monitoring."""
+
     return {"message": "Check4Parts API adapter is running"}
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}

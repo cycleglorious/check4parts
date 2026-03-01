@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import './check4.parts.theme.css';
+
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+@source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));
+
+:root {
+	scrollbar-color: var(--color-surface-300) var(--color-surface-50);
+}
+
+.shadow-none {
+	box-shadow: none !important;
+}
+
+.\*\:shadow-none {
+	* {
+		box-shadow: none !important;
+	}
+}
